@@ -3,7 +3,6 @@ package myapp
 import (
 	"net/http"
 	"text/template"
-	"strconv"
 	"encoding/json"
 	"crypto/rand"
 	"encoding/base32"
@@ -61,7 +60,6 @@ func genQuizID() string {
 }
 
 func init() {
-	http.HandleFunc("/", handler)
 	http.HandleFunc("/admin", adminHandler)
 	http.HandleFunc("/q", queryHandler)
 	http.Handle("/ql", AuthHandlerFunc(quizListHandler))
@@ -206,11 +204,4 @@ func adminHandler(w http.ResponseWriter, r *http.Request) {
 		Content: fmt.Sprintf("Hi, %s, this is your admin page. <a href='%s'>logout</a> or <a href='/'>back to main</a>",u, logouturl) }
 	}
 	adminTemplate.Execute(w, p)
-}
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	instanceHitCount++
-	p := &Page{Title: "Quizzer",
-	Content: "Nothing to see here ("+strconv.Itoa(instanceHitCount)+" instance visits)"}
-	pageTemplate.Execute(w, p)
 }
