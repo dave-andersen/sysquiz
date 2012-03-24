@@ -1,54 +1,66 @@
 package myapp
 
 import (
-	"net/http"
-	"text/template"
-	"encoding/json"
-	"crypto/rand"
-	"encoding/base32"
-	"html"
-	"fmt"
 	"appengine"
 	"appengine/datastore"
 	"appengine/user"
+	"crypto/rand"
+	"encoding/base32"
+	"encoding/json"
+	"fmt"
+	"html"
+	"net/http"
+	"text/template"
 	"time"
 )
 
 type Page struct {
-     Title string
-     Content string
+	Title   string
+	Content string
 }
 
 type Question struct {
-	Text string
-	Answer_Options []string // for multiple choice type questions
-	Answer string
-	Answer_Type string // "text", "int", "float", ...
-	Is_Stop bool // Must they answer this question before going on?
+	Text          string
+	AnswerOptions []string // for multiple choice type questions
+	Answer        string
+	AnswerType    string // "text", "int", "float", ...
+	IsStop        bool   // Must they answer this question before going on?
 }
 
 type Quiz struct {
-	Title string
-	ID string
-	Created time.Time
-	OwnerID string  `json:"-"`  // ownerID not sent via JSON
-	Questions_m string // marshaled into JSON for storage in the datastore
+	Title       string
+	ID          string
+	Created     time.Time
+	OwnerID     string `json:"-"` // ownerID not sent via JSON
+	QuestionsM  string // marshaled into JSON for storage in the datastore
 }
 
 type Quize struct { // ugly.  just a Quiz, but with Questions in correct format.
-	Title string
-	ID string
-	Created time.Time
-	OwnerID string  `json:"-"`  // ownerID not sent via JSON
+	Title     string
+	ID        string
+	Created   time.Time
+	OwnerID   string `json:"-"` // ownerID not sent via JSON
 	Questions []Question
 }
 
-var (
-	pageTemplate = template.Must(template.ParseFiles("page.html", "boring.html"))
-	adminTemplate = template.Must(template.ParseFiles("page.html", "admin.html"))
-	instanceHitCount = 0
-)
+type JSONError struct {
+	Name string `json:"name"`
+	Code int `json:"code"`
+	Message string `json:"message"`
+	Error interface{} `json:"error"`
+}
 
+var (
+	pageTemplate     = template.Must(template.ParseFiles("page.html", "boring.html"))
+	adminTemplate    = template.Must(template.ParseFiles("page.html", "admin.html"))
+	instanceHitCount = 0
+
+	ErrorField = "error"
+	// Error codes to use in the JSON response
+	ErrorAuth = JSONError{"AUTH", 401, "Authentication required", nil}
+	ErrorDatastore = JSONError{"DATA", 510, "Internal Datastore Error", nil}
+	ErrorOther = JSONError{"OTHER", 500, "Other error", nil}
+)
 
 func genQuizID() string {
 	b := make([]byte, 16)
@@ -81,7 +93,7 @@ func jsonAuthHandler(w http.ResponseWriter, r *http.Request, handler func(http.R
 	resp := make(map[string]interface{})
 	if u == nil {
 		c.Infof("jsonAuthHandler punting:  no valid user for %v", r.URL)
-		resp["status"] = "AUTH"
+		resp[ErrorField] = ErrorAuth
 	} else {
 		handler(w, r, c, u, resp)
 	}
@@ -91,32 +103,32 @@ func jsonAuthHandler(w http.ResponseWriter, r *http.Request, handler func(http.R
 }
 
 func quizUpdateHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, u *user.User, resp map[string]interface{}) {
-	var q Quiz;
-	var nq Quize;
+	var q Quiz
+	var nq Quize
 	if err := json.Unmarshal([]byte(r.FormValue("q")), &nq); err != nil {
 		c.Infof("Unmarshal json failed on %v", r.FormValue("q"))
-		resp["status"] = "json failed";
-		return;
+		resp[ErrorField] = ErrorOther
+		return
 	}
-	quizID := nq.ID;
+	quizID := nq.ID
 	k := datastore.NewKey(c, "Quiz", quizID, 0, nil)
 	// sanity check quizID, please
 	if err := datastore.Get(c, k, &q); err != nil {
-		resp["status"] = "Failed";
+		resp["status"] = ErrorDatastore
 		return
 	}
 	if q.OwnerID != u.ID {
-		resp["status"] = "AUTH";
+		resp["status"] = ErrorAuth
 		return
 	}
 	// Sanitize the incoming quiz.  ALL FIELDS - including deep into questions
 	// BE CAREFUL HERE.  Likely place to introduce xss vuln.
-	q.Title = html.EscapeString(nq.Title);
+	q.Title = html.EscapeString(nq.Title)
 	for i, qu := range nq.Questions {
 		nq.Questions[i].Text = html.EscapeString(qu.Text)
 	}
 	qm, _ := json.Marshal(nq.Questions)
-	q.Questions_m = string(qm)
+	q.QuestionsM = string(qm)
 
 	if _, err := datastore.Put(c, k, &q); err == nil {
 		resp["status"] = "ok"
@@ -155,15 +167,15 @@ func quizGetHandler(w http.ResponseWriter, r *http.Request, c appengine.Context,
 	k := datastore.NewKey(c, "Quiz", quizID, 0, nil)
 	// sanity check quizID, please
 	if err := datastore.Get(c, k, &q); err != nil {
-		resp["status"] = "Failed";
+		resp[ErrorField] = ErrorDatastore
 		return
 	}
 	if q.OwnerID != u.ID {
-		resp["status"] = "AUTH";
+		resp["status"] = ErrorAuth
 		return
 	}
 	qe := &Quize{q.Title, q.ID, q.Created, "", []Question{}}
-	json.Unmarshal([]byte(q.Questions_m), &qe.Questions)
+	json.Unmarshal([]byte(q.QuestionsM), &qe.Questions)
 	resp["status"] = "ok"
 	resp["quiz"] = qe
 }
@@ -197,11 +209,11 @@ func adminHandler(w http.ResponseWriter, r *http.Request) {
 	if u == nil {
 		url, _ := user.LoginURL(c, "/admin")
 		p = &Page{Title: "Authentication required",
-		Content: fmt.Sprintf(`<a href="%s">Sign in or register</a>`, url)}
+			Content: fmt.Sprintf(`<a href="%s">Sign in or register</a>`, url)}
 	} else {
 		logouturl, _ := user.LogoutURL(c, "/admin")
 		p = &Page{Title: "Admin",
-		Content: fmt.Sprintf("Hi, %s, this is your admin page. <a href='%s'>logout</a> or <a href='/'>back to main</a>",u, logouturl) }
+			Content: fmt.Sprintf("Hi, %s, this is your admin page. <a href='%s'>logout</a> or <a href='/'>back to main</a>", u, logouturl)}
 	}
 	adminTemplate.Execute(w, p)
 }

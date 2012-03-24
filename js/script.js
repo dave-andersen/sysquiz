@@ -93,8 +93,13 @@ function fetchQuizList() {
 }
 function gotQuizList(r) {
     removeStatus(FETCH_QUIZLIST)
-    if (r['status'] == "AUTH") {
-	$('#mainstatus').html("Need to login!  Go to <a href='/admin'>/admin</a> for now");
+    if (r['error']) {
+	var e = r['error'];
+	if (e.code == 401) {
+	    $('#mainstatus').html("Need to login!  Go to <a href='/admin'>/admin</a> for now");
+	} else {
+	    $('#mainstatus').html("Some other error happened: " +e.Message);
+	}
 	return false
     }
     var ql = r['quizlist']
