@@ -114,11 +114,11 @@ func quizUpdateHandler(w http.ResponseWriter, r *http.Request, c appengine.Conte
 	k := datastore.NewKey(c, "Quiz", quizID, 0, nil)
 	// sanity check quizID, please
 	if err := datastore.Get(c, k, &q); err != nil {
-		resp["status"] = ErrorDatastore
+		resp[ErrorField] = ErrorDatastore
 		return
 	}
 	if q.OwnerID != u.ID {
-		resp["status"] = ErrorAuth
+		resp[ErrorField] = ErrorAuth
 		return
 	}
 	// Sanitize the incoming quiz.  ALL FIELDS - including deep into questions
@@ -130,11 +130,9 @@ func quizUpdateHandler(w http.ResponseWriter, r *http.Request, c appengine.Conte
 	qm, _ := json.Marshal(nq.Questions)
 	q.QuestionsM = string(qm)
 
-	if _, err := datastore.Put(c, k, &q); err == nil {
-		resp["status"] = "ok"
-	} else {
+	if _, err := datastore.Put(c, k, &q); err != nil {
+		resp[ErrorField] = ErrorDatastore
 		c.Infof("Could not put new quiz: %v", err)
-		resp["status"] = "failed"
 	}
 }
 
@@ -144,10 +142,8 @@ func quizCreateHandler(w http.ResponseWriter, r *http.Request, c appengine.Conte
 	// validate
 	q := &Quiz{qname, genQuizID(), time.Now(), u.ID, ""}
 	k := datastore.NewKey(c, "Quiz", q.ID, 0, nil)
-	if _, err := datastore.Put(c, k, q); err == nil {
-		resp["status"] = "ok"
-	} else {
-		resp["status"] = "failed"
+	if _, err := datastore.Put(c, k, q); err != nil {
+		resp[ErrorField] = ErrorDatastore
 	}
 }
 
@@ -171,18 +167,16 @@ func quizGetHandler(w http.ResponseWriter, r *http.Request, c appengine.Context,
 		return
 	}
 	if q.OwnerID != u.ID {
-		resp["status"] = ErrorAuth
+		resp[ErrorField] = ErrorAuth
 		return
 	}
 	qe := &Quize{q.Title, q.ID, q.Created, "", []Question{}}
 	json.Unmarshal([]byte(q.QuestionsM), &qe.Questions)
-	resp["status"] = "ok"
 	resp["quiz"] = qe
 }
 
 func quizListHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, u *user.User, resp map[string]interface{}) {
 	var qlist []Quiz = make([]Quiz, 0)
-	var status = "ok"
 	q := datastore.NewQuery("Quiz").Filter("OwnerID =", u.ID).Order("Created")
 	for t := q.Run(c); ; {
 		var quiz Quiz
@@ -192,14 +186,13 @@ func quizListHandler(w http.ResponseWriter, r *http.Request, c appengine.Context
 		}
 		if err != nil {
 			c.Infof("datastore query failed: %v", err)
-			status = "failed"
+			resp[ErrorField] = ErrorDatastore
 			break
 		}
 		qlist = append(qlist, quiz)
 	}
 
 	resp["quizlist"] = qlist
-	resp["status"] = status
 }
 
 func adminHandler(w http.ResponseWriter, r *http.Request) {
