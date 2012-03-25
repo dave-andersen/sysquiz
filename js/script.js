@@ -11,59 +11,48 @@ var userid = "userid";
 
 $(document).ready(function()
 {
-//    $("#qbox").keyup(doQuery);
     fetchQuizList();
     $("#create_btn").click(createQuiz);
     $("#save_btn").click(saveQuiz);
     $("#newitem").click(newItem);
-    make_items_sortable();
+    $("#questionlist").sortable();
 });
 
-function make_items_sortable() {
-    $("#questionlist").sortable({
-	start: function(event, ui) {
-	    draggable_sibling = $(ui.item).prev();
-	},
-	stop: function(event, ui) {
-	}
-    });
+function newItem(event) {
+    event.preventDefault();
+    appendNewQuestion();
 }
 
-function newItem() {
-    append_new_question();
-    return false;
-}
-
-function parse_question(el) {
-    var q = new Object();
-    q.Text = el.find('#question_text').val();
-    q.AnswerType = el.find('#AnswerType').val();
+function parseQuestion(el) {
+    var q = { Text: el.find('#question_text').val(),
+	      AnswerType: el.find('#AnswerType').val() };
     return q;
 }
 
-function saveQuiz() {
-    var q = new Object();
-    q.ID = $('#edit_id').val();
-    q.Title = $('#edit_name').val();
-    q.Questions = new Array();
+function saveQuiz(event) {
+    event.preventDefault();
+    var q = { ID: $('#edit_id').val(),
+	      Title: $('#edit_name').val(),
+	      Questions: new Array() };
+
     $('#questionlist li').each(function(i, el) {
-	q.Questions[i] = parse_question($(this));
+	q.Questions[i] = parseQuestion($(this));
     });
+    var as_string = JSON.stringify(q);
     status(SAVE_QUIZ);
-    as_string = JSON.stringify(q);
     $.post("/qu", {q: as_string}, saveQuizDone, "json");
-    return false;
 }
 
 function saveQuizDone(r) {
-    if (r["status"] == "failed") {
-	alert("saving changes failed!");
+    if (r["error"]) {
+	alert("saving changes failed: " + r["error"].Message);
     }
     removeStatus(SAVE_QUIZ);
     fetchQuizList();
 }
 
-function createQuiz() {
+function createQuiz(event) {
+    event.preventDefault();
     $("label#name_error").hide();
     
     var qname = $(document).find('input[id="name"]').val()
@@ -75,14 +64,13 @@ function createQuiz() {
 	$("label#name_error").text(label_error);
 	$("label#name_error").show();
 	$("input#name").focus();
-	return false;
+	return;
     }
     status(CREATE_QUIZ);
-    $.post("/qc", {qname: qname }, quizCreateDone, "json");
-    return false;
+    $.post("/qc", {qname: qname }, createQuizDone, "json");
 }
 
-function quizCreateDone(r) {
+function createQuizDone(r) {
     $("input#name").val('')
     removeStatus(CREATE_QUIZ)
     fetchQuizList();
@@ -90,9 +78,10 @@ function quizCreateDone(r) {
 
 function fetchQuizList() {
     status(FETCH_QUIZLIST)
-    $.post("/ql", {u: userid }, gotQuizList, "json");
+    $.post("/ql", {u: userid }, fetchQuizListDone, "json");
 }
-function gotQuizList(r) {
+
+function fetchQuizListDone(r) {
     removeStatus(FETCH_QUIZLIST)
     if (r['error']) {
 	var e = r['error'];
@@ -113,16 +102,16 @@ function gotQuizList(r) {
 }
 
 function editQuiz(event) {
-    quizID = event.data.id;
+    event.preventDefault();
+    var quizID = event.data.id;
     status(FETCH_QUIZ);
     $.post("/qget", {q: quizID}, editQuizGotQuizInfo, "json");
-    return false;
 }
 
-function append_new_question() {
-    qhtml = $('#question_input').html()
+function appendNewQuestion() {
+    var qhtml = $('#question_input').html()
     $('#questionlist').append(qhtml);
-    el = $('#questionlist li').last() // xxx - this is n^2. :(
+    var el = $('#questionlist li').last() // xxx - this is n^2. :(
     el.find("#remove_q_btn").click({e: el}, function(event) {
 	event.data.e.remove();
 	return false;
@@ -131,7 +120,7 @@ function append_new_question() {
 }
 
 function editQuizGotQuizInfo(r) {
-    quiz = r['quiz'];
+    var quiz = r['quiz'];
     $("#revert_btn").click({id: quiz.ID}, editQuiz);
     $('#edit_name').val(quiz.Title);
     $('#edit_id').val(quiz.ID);
@@ -140,11 +129,11 @@ function editQuizGotQuizInfo(r) {
     if (quiz.Questions) {
 	for (var i = 0; i < quiz.Questions.length; i++) {
 	    var q = quiz.Questions[i];
-	    el = append_new_question();
+	    var el = appendNewQuestion();
 	    el.find("#question_text").val(q.Text)
 	    // throw in an answer div so we can delete the whole thing
 	    // if they change the type...
-	    // and then append_answer_duration(el)
+	    // and then appendAnswerDuration(el)
 	}
     }
 }
@@ -167,7 +156,7 @@ function removeStatus(s) {
 
 // Create HTML snippets for different answer types and bind them
 // to appropriate validators
-function append_answer_duration(el) {
+function appendAnswerDuration(el) {
     el.append($('#widgets #duration'));
     el.append($('#widgets #DurationUnits'));
 }
