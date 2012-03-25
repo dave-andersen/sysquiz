@@ -20,7 +20,7 @@ $(document).ready(function()
 
 function newItem(event) {
     event.preventDefault();
-    appendNewQuestion();
+    appendNewQuestion($('#questionlist'));
 }
 
 function parseQuestion(el) {
@@ -53,17 +53,18 @@ function saveQuizDone(r) {
 
 function createQuiz(event) {
     event.preventDefault();
-    $("label#name_error").hide();
+    var neLabel = $("#createquiz label#name_error");
+    var nameInput = $('input#name');
+    neLabel.hide();
     
-    var qname = $(document).find('input[id="name"]').val()
+    var qname = nameInput.val();
     var label_error = ""
     if (qname == "") {
 	label_error = "Name can't be blank";
     }
     if (label_error != "") {
-	$("label#name_error").text(label_error);
-	$("label#name_error").show();
-	$("input#name").focus();
+	neLabel.text(label_error).show();
+	nameInput.focus();
 	return;
     }
     status(CREATE_QUIZ);
@@ -93,10 +94,11 @@ function fetchQuizListDone(r) {
 	return false
     }
     var ql = r['quizlist']
-    $('#quizlist').empty()
+    var pageQl = $('#quizlist');
+    pageQl.empty();
     for (var i = 0; i < ql.length; i++) {
 	var editlink = "editlink_"+ql[i].ID;
-	$('#quizlist').append('<li><a href="#edit" id="'+editlink+'">'+ql[i].Title+'</a> - '+ql[i].ID+' ('+ql[i].Created+')</li>');
+	pageQl.append('<li><a href="#edit" id="'+editlink+'">'+ql[i].Title+'</a> - '+ql[i].ID+' ('+ql[i].Created+')</li>');
 	$('#'+editlink).click({id: ql[i].ID}, editQuiz);
     }
 }
@@ -108,10 +110,10 @@ function editQuiz(event) {
     $.post("/qget", {q: quizID}, editQuizGotQuizInfo, "json");
 }
 
-function appendNewQuestion() {
+function appendNewQuestion(ql) {
     var qhtml = $('#question_input').html()
-    $('#questionlist').append(qhtml);
-    var el = $('#questionlist li').last() // xxx - this is n^2. :(
+    ql.append(qhtml);
+    var el = ql.find('li').last();  // xxx - this is n^2. :(
     el.find("#remove_q_btn").click({e: el}, function(event) {
 	event.data.e.remove();
 	return false;
@@ -125,26 +127,18 @@ function editQuizGotQuizInfo(r) {
     $('#edit_name').val(quiz.Title);
     $('#edit_id').val(quiz.ID);
     $('#edit').show();
-    $('#questionlist').empty()
+    var ql = $('#questionlist');
+    ql.empty();
     if (quiz.Questions) {
 	for (var i = 0; i < quiz.Questions.length; i++) {
 	    var q = quiz.Questions[i];
-	    var el = appendNewQuestion();
+	    var el = appendNewQuestion(ql);
 	    el.find("#question_text").val(q.Text)
 	    // throw in an answer div so we can delete the whole thing
 	    // if they change the type...
 	    // and then appendAnswerDuration(el)
 	}
     }
-}
-
-function doQuery() {
-    var qdat = $(document).find('input[id="qbox"]').val();
-    $.post("/q", {q: qdat }, gotResult, "json");
-}
-
-function gotResult(r) {
-    $('#val').text(r['val'])
 }
 
 function status(s) {
