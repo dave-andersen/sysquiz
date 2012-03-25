@@ -51,8 +51,8 @@ type JSONError struct {
 }
 
 var (
-	pageTemplate     = template.Must(template.ParseFiles("page.html", "boring.html"))
-	adminTemplate    = template.Must(template.ParseFiles("page.html", "admin.html"))
+	pageTemplate     = template.Must(template.ParseFiles("html/page.html", "html/boring.html"))
+	adminTemplate    = template.Must(template.ParseFiles("html/page.html", "html/admin.html"))
 	instanceHitCount = 0
 
 	ErrorField = "error"
