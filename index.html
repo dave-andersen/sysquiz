@@ -58,7 +58,7 @@
   <div id="edit" style="display:none;">
     <!-- text for the question input box.  Not directly used - just its html -->
     <div id="question_input" style="display:none;">
-      <li><label for="question_text">Question text</label>
+      <li>(<a href="#" id="remove_q_btn">remove</a>)<label for="question_text">Question text</label>
       <input type="text" name="question_text" id="question_text" class="text-input" />
       </li>
     </div>
@@ -77,7 +77,9 @@
     <input type="submit" name="newitem" class="button" id="newitem" value="Add New Item" />
     <br />
     <p>
-    <input type="submit" name="save" class="button" id="save_btn" value="Save Changes" /></p>
+    <input type="submit" name="save" class="button" id="save_btn" value="Save Changes" />
+    <input type="submit" name="revert" class="button" id="revert_btn" value="Revert to Last Saved" />
+</p>
 
    </fieldset>
   </form>

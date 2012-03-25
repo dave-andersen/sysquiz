@@ -120,6 +120,7 @@ function editQuiz(event) {
 
 function editQuizGotQuizInfo(r) {
     quiz = r['quiz'];
+    $("#revert_btn").click({id: quiz.ID}, editQuiz);
     $('#edit_name').val(quiz.Title);
     $('#edit_id').val(quiz.ID);
     $('#edit').show();
@@ -130,6 +131,10 @@ function editQuizGotQuizInfo(r) {
 	    var q = quiz.Questions[i];
 	    $('#questionlist').append(qhtml);
 	    el = $('#questionlist li').last() // xxx - this is n^2. :(
+	    el.find("#remove_q_btn").click({e: el}, function(event) {
+		event.data.e.remove();
+		return false;
+	    });
 	    el.find("#question_text").val(q.Text)
 	}
     }
