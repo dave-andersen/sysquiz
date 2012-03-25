@@ -59,7 +59,10 @@ var (
 	// Error codes to use in the JSON response
 	ErrorAuth = JSONError{"AUTH", 401, "Authentication required", nil}
 	ErrorDatastore = JSONError{"DATA", 510, "Internal Datastore Error", nil}
+	ErrorFormat = JSONError{"FORMAT", 400, "Bad request", nil }
 	ErrorOther = JSONError{"OTHER", 500, "Other error", nil}
+
+	valid_atype = map[string]bool { "short" : true, "long": true, "mc": true, "int": true, "float": true, "duration": true }
 )
 
 func genQuizID() string {
@@ -87,7 +90,6 @@ func (f AuthHandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func jsonAuthHandler(w http.ResponseWriter, r *http.Request, handler func(http.ResponseWriter, *http.Request, appengine.Context, *user.User, map[string]interface{})) {
-	w.Header().Set("Content-Type", "text/javascript")
 	c := appengine.NewContext(r)
 	u := user.Current(c)
 	resp := make(map[string]interface{})
@@ -97,6 +99,7 @@ func jsonAuthHandler(w http.ResponseWriter, r *http.Request, handler func(http.R
 	} else {
 		handler(w, r, c, u, resp)
 	}
+	w.Header().Set("Content-Type", "text/javascript")
 	b, _ := json.Marshal(resp)
 	w.Write(b)
 	return
@@ -126,6 +129,12 @@ func quizUpdateHandler(w http.ResponseWriter, r *http.Request, c appengine.Conte
 	q.Title = html.EscapeString(nq.Title)
 	for i, qu := range nq.Questions {
 		nq.Questions[i].Text = html.EscapeString(qu.Text)
+		if !valid_atype[qu.AnswerType] {
+			resp[ErrorField] = ErrorFormat
+			c.Infof("Invalid answer type: ", qu.AnswerType)
+		} else {
+			nq.Questions[i].AnswerType = qu.AnswerType
+		}
 	}
 	qm, _ := json.Marshal(nq.Questions)
 	q.QuestionsM = string(qm)

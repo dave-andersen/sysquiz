@@ -30,13 +30,14 @@ function make_items_sortable() {
 }
 
 function newItem() {
-    $("#questionlist").append($("#question_input").html())
+    append_new_question();
     return false;
 }
 
 function parse_question(el) {
     var q = new Object();
     q.Text = el.find('#question_text').val();
+    q.AnswerType = el.find('#AnswerType').val();
     return q;
 }
 
@@ -118,6 +119,17 @@ function editQuiz(event) {
     return false;
 }
 
+function append_new_question() {
+    qhtml = $('#question_input').html()
+    $('#questionlist').append(qhtml);
+    el = $('#questionlist li').last() // xxx - this is n^2. :(
+    el.find("#remove_q_btn").click({e: el}, function(event) {
+	event.data.e.remove();
+	return false;
+    });
+    return el;
+}
+
 function editQuizGotQuizInfo(r) {
     quiz = r['quiz'];
     $("#revert_btn").click({id: quiz.ID}, editQuiz);
@@ -126,16 +138,13 @@ function editQuizGotQuizInfo(r) {
     $('#edit').show();
     $('#questionlist').empty()
     if (quiz.Questions) {
-	qhtml = $('#question_input').html()
 	for (var i = 0; i < quiz.Questions.length; i++) {
 	    var q = quiz.Questions[i];
-	    $('#questionlist').append(qhtml);
-	    el = $('#questionlist li').last() // xxx - this is n^2. :(
-	    el.find("#remove_q_btn").click({e: el}, function(event) {
-		event.data.e.remove();
-		return false;
-	    });
+	    el = append_new_question();
 	    el.find("#question_text").val(q.Text)
+	    // throw in an answer div so we can delete the whole thing
+	    // if they change the type...
+	    // and then append_answer_duration(el)
 	}
     }
 }
@@ -154,4 +163,11 @@ function status(s) {
 }
 function removeStatus(s) {
     $('#status').text('')
+}
+
+// Create HTML snippets for different answer types and bind them
+// to appropriate validators
+function append_answer_duration(el) {
+    el.append($('#widgets #duration'));
+    el.append($('#widgets #DurationUnits'));
 }

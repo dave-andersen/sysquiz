@@ -43,10 +43,26 @@
 
   </div>
 
+  <!-- stored display stuff that we'll use within other components -->
+  <div id="widgets" style="display:none;">
+    <input id="duration" name="duration" value="" type="text-input" />
+    <select id="DurationUnits">
+      <option value="y">years</option>
+      <option value="d">days</option>
+      <option value="h">hours</option>
+      <option value="m">minutes</option>
+      <option value="s" selected>s</option>
+      <option value="ms">ms</option>
+      <option value="us">&mu;s</option>
+      <option value="ns">ns</option>
+      <option value="ps">ps</option>
+    </select>
+  </div>
+
   <div id="createquiz">
    <form id="newquiz" action="">
     <fieldset>
-    <label for="name" id="name_label">Quiz name</label>
+    <label for="name" id="name_label">Quiz name</label>    
     <input type="text" name="name" id="name" value="" class="text-input" />
     <label class="error" for="name" id="name_error" style="display:none;">(Don't leave blank)</label>
     <br />
@@ -58,8 +74,18 @@
   <div id="edit" style="display:none;">
     <!-- text for the question input box.  Not directly used - just its html -->
     <div id="question_input" style="display:none;">
-      <li>(<a href="#" id="remove_q_btn">remove</a>)<label for="question_text">Question text</label>
-      <input type="text" name="question_text" id="question_text" class="text-input" />
+      <li>(<a href="#" id="remove_q_btn">remove</a>)
+<label for="question_text">Question text</label>
+      <input type="text" name="question_text" id="question_text" class="text-input" /> <br />
+      <label for="AnswerType">Answer type:</label>
+    <select id="AnswerType">
+    <option value="short" selected>Short answer</option>
+    <option value="long">Long answer</option>
+    <option value="mc">Multiple choice</option>
+    <option value="int">Integer answer</option>
+    <option value="float">Floating-point answer</option>
+    <option value="dur">Duration (time)</option>
+    </select>
       </li>
     </div>
   <h2>Edit Quiz</h2>

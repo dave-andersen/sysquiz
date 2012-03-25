@@ -223,6 +223,12 @@ div #putget { font-size: 300%; }
 h1 { background: #ccddce; }
 div#statusbox { position: absolute; bottom: 0; background: #ccddce; width: 100%; }
 
+ol#questionlist li {
+    border: 2px dashed gray;
+    margin: 2px;
+    padding: 3px;
+    margin-bottom: 5px;
+}
 
 
 
