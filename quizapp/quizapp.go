@@ -33,7 +33,7 @@ type Quiz struct {
 	Created     time.Time
 	OwnerID     string `json:"-"` // ownerID not sent via JSON
 	QuestionsM  string `json:"-"`// marshaled into JSON for storage in the datastore
-	Questions   []Question `datastore"-"` // sent via the network
+	Questions   []Question `datastore:"-"` // sent via the network
 }
 
 type JSONError struct {
