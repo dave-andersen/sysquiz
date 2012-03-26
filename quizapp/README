@@ -1,0 +1,15 @@
+Transactional model for the system:
+
+- Editing a quiz is first-writer-wins.
+  Long-term todo:  
+   - If page is open, periodically re-validate / check for updates to avoid surprising the user.
+   - Check for convergent edits and silently forgive?
+
+- Taking a quiz is also first-writer wins.  Same deal as above.
+
+- What happens if a quiz is edited _while_ a student is taking it?
+  option 1:  Snapshot isolation:  They take the quiz they started;
+  option 2:  Kinda sorta merge; ?
+  option 3:  Disallow structural edits once quiz is opened for business;
+     could still fix typos in descriptions, but not add/remove answers,
+     etc.  This seems attractive.
