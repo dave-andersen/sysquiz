@@ -32,15 +32,8 @@ type Quiz struct {
 	ID          string
 	Created     time.Time
 	OwnerID     string `json:"-"` // ownerID not sent via JSON
-	QuestionsM  string // marshaled into JSON for storage in the datastore
-}
-
-type Quize struct { // ugly.  just a Quiz, but with Questions in correct format.
-	Title     string
-	ID        string
-	Created   time.Time
-	OwnerID   string `json:"-"` // ownerID not sent via JSON
-	Questions []Question
+	QuestionsM  string `json:"-"`// marshaled into JSON for storage in the datastore
+	Questions   []Question `datastore"-"` // sent via the network
 }
 
 type JSONError struct {
@@ -62,7 +55,7 @@ var (
 	ErrorFormat = JSONError{"FORMAT", 400, "Bad request", nil }
 	ErrorOther = JSONError{"OTHER", 500, "Other error", nil}
 
-	valid_atype = map[string]bool { "short" : true, "long": true, "mc": true, "int": true, "float": true, "duration": true }
+	valid_atype = map[string]bool { "text" : true, "mc": true, "int": true, "float": true, "duration": true }
 )
 
 func genQuizID() string {
@@ -107,7 +100,7 @@ func jsonAuthHandler(w http.ResponseWriter, r *http.Request, handler func(http.R
 
 func quizUpdateHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, u *user.User, resp map[string]interface{}) {
 	var q Quiz
-	var nq Quize
+	var nq Quiz
 	if err := json.Unmarshal([]byte(r.FormValue("q")), &nq); err != nil {
 		c.Infof("Unmarshal json failed on %v", r.FormValue("q"))
 		resp[ErrorField] = ErrorOther
@@ -149,7 +142,7 @@ func quizCreateHandler(w http.ResponseWriter, r *http.Request, c appengine.Conte
 	qname := r.FormValue("qname")
 	qname = html.EscapeString(qname)
 	// validate
-	q := &Quiz{qname, genQuizID(), time.Now(), u.ID, ""}
+	q := &Quiz{qname, genQuizID(), time.Now(), u.ID, "", []Question{}}
 	k := datastore.NewKey(c, "Quiz", q.ID, 0, nil)
 	if _, err := datastore.Put(c, k, q); err != nil {
 		resp[ErrorField] = ErrorDatastore
@@ -179,7 +172,7 @@ func quizGetHandler(w http.ResponseWriter, r *http.Request, c appengine.Context,
 		resp[ErrorField] = ErrorAuth
 		return
 	}
-	qe := &Quize{q.Title, q.ID, q.Created, "", []Question{}}
+	qe := &Quiz{q.Title, q.ID, q.Created, "", "", []Question{}}
 	json.Unmarshal([]byte(q.QuestionsM), &qe.Questions)
 	resp["quiz"] = qe
 }
