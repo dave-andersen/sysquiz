@@ -28,7 +28,7 @@ sysquiz.newItem = function(event) {
 
 sysquiz.parseQuestion = function(el) {
     var q = { Text: el.find('#questionText').val(),
-	      AnswerType: el.find('#AnswerType').val() };
+	      AnswerType: el.find('#answerType').val() };
     return q;
 }
 
@@ -121,12 +121,20 @@ sysquiz.appendNewQuestion = function(ql) {
 	event.data.e.remove();
 	return false;
     });
-    el.find("#AnswerType").change({e: el}, sysquiz.changeAnswerType);
+    el.find("#answerType").change({e: el}, function(event) {
+	sysquiz.changeAnswerType(event.data.e);
+    });
+    sysquiz.changeAnswerType(el);
+    //el.find("#textAnswer").resizable({ handles: "se", disabled: false });
     return el;
 }
 
-sysquiz.changeAnswerType = function(event) {
-    // Handle it here.
+sysquiz.changeAnswerType = function(el) {
+    //el.find('.answerbox').hide();
+    var atype = el.find("#answerType").val();
+    // multiple choice isn't handled yet.
+    // I want them to be able to resize the text input box for answer.
+    // and save it.
 }
 
 sysquiz.editQuizGotQuizInfo = function(r) {

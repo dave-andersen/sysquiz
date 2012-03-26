@@ -77,15 +77,16 @@
       <li>(<a href="#" id="removeQBtn">remove</a>)
 <label for="question_text">Question text</label>
       <input type="text" name="questionText" id="questionText" class="text-input" /> <br />
-      <label for="AnswerType">Answer type:</label>
-    <select id="AnswerType">
-    <option value="short" selected>Short answer</option>
-    <option value="long">Long answer</option>
+      <label for="answerType">Answer type:</label>
+    <select id="answerType">
+    <option value="text" selected>Text answer</option>
     <option value="mc">Multiple choice</option>
     <option value="int">Integer answer</option>
     <option value="float">Floating-point answer</option>
     <option value="dur">Duration (time)</option>
-    </select>
+    </select><br />
+      <label>Answer:</label>
+      <textarea name="textAnswer" id="textAnswer" class="ui-widget-content" rows="1" cols="40"></textarea>
       </li>
     </div>
   <h2>Edit Quiz</h2>
