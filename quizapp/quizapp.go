@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"text/template"
 	"time"
+	"errors"
 )
 
 type Page struct {
@@ -34,6 +35,7 @@ type Quiz struct {
 	OwnerID     string `json:"-"` // ownerID not sent via JSON
 	QuestionsM  string `json:"-"`// marshaled into JSON for storage in the datastore
 	Questions   []Question `datastore:"-"` // sent via the network
+	Version     int // for multiple writer consistency
 }
 
 type JSONError struct {
@@ -52,7 +54,8 @@ var (
 	// Error codes to use in the JSON response
 	ErrorAuth = JSONError{"AUTH", 401, "Authentication required", nil}
 	ErrorDatastore = JSONError{"DATA", 510, "Internal Datastore Error", nil}
-	ErrorFormat = JSONError{"FORMAT", 400, "Bad request", nil }
+	ErrorFormat = JSONError{"FORMAT", 400, "Bad request", nil}
+	ErrorVersion = JSONError{"VERSION", 409, "Conflicting update - someone else updated this since you loaded it.", nil}
 	ErrorOther = JSONError{"OTHER", 500, "Other error", nil}
 
 	valid_atype = map[string]bool { "text" : true, "mc": true, "int": true, "float": true, "duration": true }
@@ -107,32 +110,47 @@ func quizUpdateHandler(w http.ResponseWriter, r *http.Request, c appengine.Conte
 	quizID := nq.ID
 	k := datastore.NewKey(c, "Quiz", quizID, 0, nil)
 	// sanity check quizID, please
-	if err := datastore.Get(c, k, &q); err != nil {
-		resp[ErrorField] = ErrorDatastore
-		return
-	}
-	if q.OwnerID != u.ID {
-		resp[ErrorField] = ErrorAuth
-		return
-	}
-	// Sanitize the incoming quiz.  ALL FIELDS - including deep into questions
-	// BE CAREFUL HERE.  Likely place to introduce xss vuln.
-	q.Title = html.EscapeString(nq.Title)
-	for i, qu := range nq.Questions {
-		nq.Questions[i].Text = html.EscapeString(qu.Text)
-		if !valid_atype[qu.AnswerType] {
-			resp[ErrorField] = ErrorFormat
-			c.Infof("Invalid answer type: ", qu.AnswerType)
-		} else {
-			nq.Questions[i].AnswerType = qu.AnswerType
+	err := datastore.RunInTransaction(c, func(c appengine.Context) error {
+		var err1 error
+		if err1 = datastore.Get(c, k, &q); err1 != nil {
+			resp[ErrorField] = ErrorDatastore
+			return err1
 		}
-	}
-	qm, _ := json.Marshal(nq.Questions)
-	q.QuestionsM = string(qm)
+		if q.OwnerID != u.ID {
+			resp[ErrorField] = ErrorAuth
+			return errors.New("Owner mismatch")
+		}
+		if (q.Version != nq.Version) {
+			resp[ErrorField] = ErrorVersion
+			return errors.New("Version mismatch")
+		}
+		q.Version++
+		
+		// Sanitize the incoming quiz.  ALL FIELDS - including deep into questions
+		// BE CAREFUL HERE.  Likely place to introduce xss vuln.
+		q.Title = html.EscapeString(nq.Title)
+		for i, qu := range nq.Questions {
+			nq.Questions[i].Text = html.EscapeString(qu.Text)
+			if !valid_atype[qu.AnswerType] {
+				resp[ErrorField] = ErrorFormat
+				c.Infof("Invalid answer type: ", qu.AnswerType)
+				return errors.New("bad format")
+			} else {
+				nq.Questions[i].AnswerType = qu.AnswerType
+			}
+		}
+		qm, _ := json.Marshal(nq.Questions)
+		q.QuestionsM = string(qm)
 
-	if _, err := datastore.Put(c, k, &q); err != nil {
-		resp[ErrorField] = ErrorDatastore
-		c.Infof("Could not put new quiz: %v", err)
+		if _, err1 = datastore.Put(c, k, &q); err1 != nil {
+			resp[ErrorField] = ErrorDatastore
+			c.Infof("Could not put new quiz: %v", err1)
+			return errors.New("put failed")
+		}
+		return nil
+	}, nil) // xxx - this function is kinda long for an inline one...
+	if err != nil {
+		c.Infof("Transactional update failed: ", err)
 	}
 }
 
@@ -140,7 +158,7 @@ func quizCreateHandler(w http.ResponseWriter, r *http.Request, c appengine.Conte
 	qname := r.FormValue("qname")
 	qname = html.EscapeString(qname)
 	// validate
-	q := &Quiz{qname, genQuizID(), time.Now(), u.ID, "", []Question{}}
+	q := &Quiz{qname, genQuizID(), time.Now(), u.ID, "", []Question{}, 0}
 	k := datastore.NewKey(c, "Quiz", q.ID, 0, nil)
 	if _, err := datastore.Put(c, k, q); err != nil {
 		resp[ErrorField] = ErrorDatastore
@@ -169,9 +187,8 @@ func quizGetHandler(w http.ResponseWriter, r *http.Request, c appengine.Context,
 		resp[ErrorField] = ErrorAuth
 		return
 	}
-	qe := &Quiz{q.Title, q.ID, q.Created, "", "", []Question{}}
-	json.Unmarshal([]byte(q.QuestionsM), &qe.Questions)
-	resp["quiz"] = qe
+	json.Unmarshal([]byte(q.QuestionsM), &q.Questions)
+	resp["quiz"] = q
 }
 
 func quizListHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, u *user.User, resp map[string]interface{}) {

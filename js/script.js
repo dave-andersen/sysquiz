@@ -35,6 +35,7 @@ sysquiz.parseQuestion = function(el) {
 sysquiz.saveQuiz = function(event) {
     event.preventDefault();
     var q = { ID: $('#editId').val(),
+	      Version: +($('#editVersion').val()), // + to convert to Int. sigh.
 	      Title: $('#editName').val(),
 	      Questions: new Array() };
 
@@ -48,7 +49,7 @@ sysquiz.saveQuiz = function(event) {
 
 sysquiz.saveQuizDone = function(r) {
     if (r["error"]) {
-	alert("saving changes failed: " + r["error"].Message);
+	alert("saving changes failed: " + r["error"].message);
     }
     sysquiz.removeStatus(SAVE_QUIZ);
     sysquiz.fetchQuizList();
@@ -142,6 +143,7 @@ sysquiz.editQuizGotQuizInfo = function(r) {
     $("#revertBtn").unbind('click').click({id: quiz.ID}, sysquiz.editQuiz);
     $('#editName').val(quiz.Title);
     $('#editId').val(quiz.ID);
+    $('#editVersion').val(quiz.Version);
     $('#edit').show();
     var ql = $('#questionlist');
     ql.empty();
