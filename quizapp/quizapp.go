@@ -60,8 +60,7 @@ var (
 
 func genQuizID() string {
 	b := make([]byte, 16)
-	n, err := rand.Read(b)
-	if n != 16 {
+	if n, err := rand.Read(b); n != 16 {
 		panic(fmt.Sprintf("could not read 16 random bytes.  I'm very unhappy: %s", err))
 	}
 	return base32.StdEncoding.EncodeToString(b)[0:24]
@@ -83,10 +82,9 @@ func (f AuthHandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func jsonAuthHandler(w http.ResponseWriter, r *http.Request, handler func(http.ResponseWriter, *http.Request, appengine.Context, *user.User, map[string]interface{})) {
-	c := appengine.NewContext(r)
-	u := user.Current(c)
 	resp := make(map[string]interface{})
-	if u == nil {
+	c := appengine.NewContext(r)
+	if u := user.Current(c); u == nil {
 		c.Infof("jsonAuthHandler punting:  no valid user for %v", r.URL)
 		resp[ErrorField] = ErrorAuth
 	} else {
@@ -153,8 +151,7 @@ func queryHandler(w http.ResponseWriter, r *http.Request) {
 	resp := make(map[string]string)
 	resp["val"] = r.FormValue("q")
 	w.Header().Set("Content-Type", "text/javascript")
-	b, err := json.Marshal(resp)
-	if err == nil {
+	if b, err := json.Marshal(resp); err == nil {
 		w.Write(b)
 	}
 }
@@ -199,9 +196,8 @@ func quizListHandler(w http.ResponseWriter, r *http.Request, c appengine.Context
 
 func adminHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
-	u := user.Current(c)
 	var p *Page
-	if u == nil {
+	if u := user.Current(c); u == nil {
 		url, _ := user.LoginURL(c, "/admin")
 		p = &Page{Title: "Authentication required",
 			Content: fmt.Sprintf(`<a href="%s">Sign in or register</a>`, url)}
