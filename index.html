@@ -62,21 +62,21 @@
   <div id="createquiz">
    <form id="newquiz" action="">
     <fieldset>
-    <label for="name" id="name_label">Quiz name</label>    
+    <label for="name" id="nameLabel">Quiz name</label>    
     <input type="text" name="name" id="name" value="" class="text-input" />
-    <label class="error" for="name" id="name_error" style="display:none;">(Don't leave blank)</label>
+    <label class="error" for="name" id="nameError" style="display:none;">(Don't leave blank)</label>
     <br />
-    <input type="submit" name="create" class="button" id="create_btn" value="Create" />
+    <input type="submit" name="create" class="button" id="createBtn" value="Create" />
    </fieldset>
    </form>
   </div>
 
   <div id="edit" style="display:none;">
     <!-- text for the question input box.  Not directly used - just its html -->
-    <div id="question_input" style="display:none;">
-      <li>(<a href="#" id="remove_q_btn">remove</a>)
+    <div id="questionInput" style="display:none;">
+      <li>(<a href="#" id="removeQBtn">remove</a>)
 <label for="question_text">Question text</label>
-      <input type="text" name="question_text" id="question_text" class="text-input" /> <br />
+      <input type="text" name="questionText" id="questionText" class="text-input" /> <br />
       <label for="AnswerType">Answer type:</label>
     <select id="AnswerType">
     <option value="short" selected>Short answer</option>
@@ -91,10 +91,10 @@
   <h2>Edit Quiz</h2>
   <form>
    <fieldset>
-     <input style="display:none;" type="hidden" id="edit_id" value="" />
-     <label for="name" id="edit_name_label">Quiz name</label>
-     <input type="text" name="edit_name" id="edit_name" value="" class="text-input" />
-    <label class="error" for="name" id="name_error" style="display:none;">(Don't leave blank)</label>
+     <input style="display:none;" type="hidden" id="editId" value="" />
+     <label for="name" id="editNameLabel">Quiz name</label>
+     <input type="text" name="editName" id="editName" value="" class="text-input" />
+    <label class="error" for="name" id="nameError" style="display:none;">(Don't leave blank)</label>
     <h3>Questions</h3>
     <p>(drag to re-order)</p>
     <ol id="questionlist">
@@ -103,8 +103,8 @@
     <input type="submit" name="newitem" class="button" id="newitem" value="Add New Item" />
     <br />
     <p>
-    <input type="submit" name="save" class="button" id="save_btn" value="Save Changes" />
-    <input type="submit" name="revert" class="button" id="revert_btn" value="Revert to Last Saved" />
+    <input type="submit" name="save" class="button" id="saveBtn" value="Save Changes" />
+    <input type="submit" name="revert" class="button" id="revertBtn" value="Revert to Last Saved" />
 </p>
 
    </fieldset>

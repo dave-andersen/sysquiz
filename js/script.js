@@ -15,8 +15,8 @@ var sysquiz = {};
 $(document).ready(function()
 {
     sysquiz.fetchQuizList();
-    $("#create_btn").click(sysquiz.createQuiz);
-    $("#save_btn").click(sysquiz.saveQuiz);
+    $("#createBtn").click(sysquiz.createQuiz);
+    $("#saveBtn").click(sysquiz.saveQuiz);
     $("#newitem").click(sysquiz.newItem);
     $("#questionlist").sortable();
 });
@@ -27,15 +27,15 @@ sysquiz.newItem = function(event) {
 }
 
 sysquiz.parseQuestion = function(el) {
-    var q = { Text: el.find('#question_text').val(),
+    var q = { Text: el.find('#questionText').val(),
 	      AnswerType: el.find('#AnswerType').val() };
     return q;
 }
 
 sysquiz.saveQuiz = function(event) {
     event.preventDefault();
-    var q = { ID: $('#edit_id').val(),
-	      Title: $('#edit_name').val(),
+    var q = { ID: $('#editId').val(),
+	      Title: $('#editName').val(),
 	      Questions: new Array() };
 
     $('#questionlist li').each(function(i, el) {
@@ -56,17 +56,17 @@ sysquiz.saveQuizDone = function(r) {
 
 sysquiz.createQuiz = function(event) {
     event.preventDefault();
-    var neLabel = $("#createquiz label#name_error");
+    var neLabel = $("#createquiz label#nameError");
     var nameInput = $('input#name');
     neLabel.hide();
     
     var qname = nameInput.val();
-    var label_error = ""
+    var labelError = ""
     if (qname == "") {
-	label_error = "Name can't be blank";
+	labelError = "Name can't be blank";
     }
-    if (label_error != "") {
-	neLabel.text(label_error).show();
+    if (labelError != "") {
+	neLabel.text(labelError).show();
 	nameInput.focus();
 	return;
     }
@@ -102,7 +102,7 @@ sysquiz.fetchQuizListDone = function(r) {
     for (var i = 0; i < ql.length; i++) {
 	var editlink = "editlink_"+ql[i].ID;
 	pageQl.append('<li><a href="#edit" id="'+editlink+'">'+ql[i].Title+'</a> - '+ql[i].ID+' ('+ql[i].Created+')</li>');
-	$('#'+editlink).click({id: ql[i].ID}, sysquiz.editQuiz);
+	pageQl.find('#'+editlink).click({id: ql[i].ID}, sysquiz.editQuiz);
     }
 }
 
@@ -114,21 +114,26 @@ sysquiz.editQuiz = function(event) {
 }
 
 sysquiz.appendNewQuestion = function(ql) {
-    var qhtml = $('#question_input').html()
+    var qhtml = $('#questionInput').html()
     ql.append(qhtml);
     var el = ql.find('li').last();  // xxx - this is n^2. :(
-    el.find("#remove_q_btn").click({e: el}, function(event) {
+    el.find("#removeQBtn").click({e: el}, function(event) {
 	event.data.e.remove();
 	return false;
     });
+    el.find("#AnswerType").change({e: el}, sysquiz.changeAnswerType);
     return el;
+}
+
+sysquiz.changeAnswerType = function(event) {
+    // Handle it here.
 }
 
 sysquiz.editQuizGotQuizInfo = function(r) {
     var quiz = r['quiz'];
-    $("#revert_btn").unbind('click').click({id: quiz.ID}, sysquiz.editQuiz);
-    $('#edit_name').val(quiz.Title);
-    $('#edit_id').val(quiz.ID);
+    $("#revertBtn").unbind('click').click({id: quiz.ID}, sysquiz.editQuiz);
+    $('#editName').val(quiz.Title);
+    $('#editId').val(quiz.ID);
     $('#edit').show();
     var ql = $('#questionlist');
     ql.empty();
@@ -136,7 +141,7 @@ sysquiz.editQuizGotQuizInfo = function(r) {
 	for (var i = 0; i < quiz.Questions.length; i++) {
 	    var q = quiz.Questions[i];
 	    var el = sysquiz.appendNewQuestion(ql);
-	    el.find("#question_text").val(q.Text)
+	    el.find("#questionText").val(q.Text)
 	    // throw in an answer div so we can delete the whole thing
 	    // if they change the type...
 	    // and then appendAnswerDuration(el)
