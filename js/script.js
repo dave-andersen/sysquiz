@@ -4,14 +4,14 @@
  */
 "use strict";
 
-var FETCH_QUIZLIST = "Fetching quiz list";
-var CREATE_QUIZ = "Creating quiz";
-var FETCH_QUIZ = "Fetching quiz data";
-var SAVE_QUIZ = "Saving quiz";
-var userid = "userid";
-
 /* Namespace for this app */
 var sysquiz = {};
+
+/* Status messages - @const */
+sysquiz.FETCH_QUIZLIST = "Fetching quiz list";
+sysquiz.CREATE_QUIZ = "Creating quiz";
+sysquiz.FETCH_QUIZ = "Fetching quiz data";
+sysquiz.SAVE_QUIZ = "Saving quiz";
 
 $(document).ready(function() {
     sysquiz.fetchQuizList();
@@ -43,7 +43,7 @@ sysquiz.saveQuiz = function(event) {
 	q.Questions[i] = sysquiz.parseQuestion($(this));
     });
     var as_string = JSON.stringify(q);
-    sysquiz.status(SAVE_QUIZ);
+    sysquiz.status(sysquiz.SAVE_QUIZ);
     $.post("/qu", {q: as_string}, sysquiz.saveQuizDone, "json");
 }
 
@@ -51,7 +51,7 @@ sysquiz.saveQuizDone = function(r) {
     if (r["error"]) {
 	alert("saving changes failed: " + r["error"].message);
     }
-    sysquiz.removeStatus(SAVE_QUIZ);
+    sysquiz.removeStatus(sysquiz.SAVE_QUIZ);
     sysquiz.fetchQuizList();
 }
 
@@ -71,23 +71,23 @@ sysquiz.createQuiz = function(event) {
 	nameInput.focus();
 	return;
     }
-    sysquiz.status(CREATE_QUIZ);
+    sysquiz.status(sysquiz.CREATE_QUIZ);
     $.post("/qc", {qname: qname }, sysquiz.createQuizDone, "json");
 }
 
 sysquiz.createQuizDone = function(r) {
     $("input#name").val('')
-    sysquiz.removeStatus(CREATE_QUIZ)
+    sysquiz.removeStatus(sysquiz.CREATE_QUIZ)
     sysquiz.fetchQuizList();
 }
 
 sysquiz.fetchQuizList = function() {
-    sysquiz.status(FETCH_QUIZLIST)
-    $.post("/ql", {u: userid }, sysquiz.fetchQuizListDone, "json");
+    sysquiz.status(sysquiz.FETCH_QUIZLIST)
+    $.post("/ql", {}, sysquiz.fetchQuizListDone, "json");
 }
 
 sysquiz.fetchQuizListDone = function(r) {
-    sysquiz.removeStatus(FETCH_QUIZLIST)
+    sysquiz.removeStatus(sysquiz.FETCH_QUIZLIST)
     if (r['error']) {
 	var e = r['error'];
 	if (e.code === 401) {
@@ -110,7 +110,7 @@ sysquiz.fetchQuizListDone = function(r) {
 sysquiz.editQuiz = function(event) {
     event.preventDefault();
     var quizID = event.data.id;
-    sysquiz.status(FETCH_QUIZ);
+    sysquiz.status(sysquiz.FETCH_QUIZ);
     $.post("/qget", {q: quizID}, sysquiz.editQuizGotQuizInfo, "json");
 }
 
