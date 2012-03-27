@@ -2,6 +2,7 @@
  *
  * requires jquery to be loaded already
  */
+"use strict";
 
 var FETCH_QUIZLIST = "Fetching quiz list";
 var CREATE_QUIZ = "Creating quiz";
@@ -12,8 +13,7 @@ var userid = "userid";
 /* Namespace for this app */
 var sysquiz = {};
 
-$(document).ready(function()
-{
+$(document).ready(function() {
     sysquiz.fetchQuizList();
     $("#createBtn").click(sysquiz.createQuiz);
     $("#saveBtn").click(sysquiz.saveQuiz);
@@ -63,10 +63,10 @@ sysquiz.createQuiz = function(event) {
     
     var qname = nameInput.val();
     var labelError = ""
-    if (qname == "") {
+    if (qname === "") {
 	labelError = "Name can't be blank";
     }
-    if (labelError != "") {
+    if (labelError !== "") {
 	neLabel.text(labelError).show();
 	nameInput.focus();
 	return;
@@ -90,7 +90,7 @@ sysquiz.fetchQuizListDone = function(r) {
     sysquiz.removeStatus(FETCH_QUIZLIST)
     if (r['error']) {
 	var e = r['error'];
-	if (e.code == 401) {
+	if (e.code === 401) {
 	    $('#mainstatus').html("Need to login!  Go to <a href='/admin'>/admin</a> for now");
 	} else {
 	    $('#mainstatus').html("Some other error happened: " +e.Message);
@@ -139,6 +139,7 @@ sysquiz.changeAnswerType = function(el) {
 }
 
 sysquiz.editQuizGotQuizInfo = function(r) {
+    "use strict";
     var quiz = r['quiz'];
     $("#revertBtn").unbind('click').click({id: quiz.ID}, sysquiz.editQuiz);
     $('#editName').val(quiz.Title);
