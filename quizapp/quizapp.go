@@ -77,7 +77,6 @@ func init() {
 	pageTemplate = template.Must(template.ParseFiles("html/page.html", "html/boring.html"))
 	adminTemplate = template.Must(template.ParseFiles("html/page.html", "html/admin.html"))
 	http.HandleFunc("/admin", adminHandler)
-	http.HandleFunc("/q", queryHandler)
 	http.Handle("/ql", AuthHandlerFunc(quizListHandler))
 	http.Handle("/qc", AuthHandlerFunc(quizCreateHandler))
 	http.Handle("/qget", AuthHandlerFunc(quizGetHandler))
@@ -106,7 +105,6 @@ func jsonAuthHandler(w http.ResponseWriter, r *http.Request, handler func(http.R
 }
 
 func quizUpdateHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, u *user.User, resp map[string]interface{}) {
-	var q Quiz
 	var nq Quiz
 	if err := json.Unmarshal([]byte(r.FormValue("q")), &nq); err != nil {
 		c.Infof("Unmarshal json failed on %v", r.FormValue("q"))
@@ -117,8 +115,11 @@ func quizUpdateHandler(w http.ResponseWriter, r *http.Request, c appengine.Conte
 	k := datastore.NewKey(c, "Quiz", quizID, 0, nil)
 	// sanity check quizID, please
 	err := datastore.RunInTransaction(c, func(c appengine.Context) error {
-		var err1 error
-		if err1 = datastore.Get(c, k, &q); err1 != nil {
+		// Rule:  'q' is the quiz from the datastore.  'nq' is the quiz
+		// from the app.  Fields to be updated must be pulled explicitly
+		// from nq into q.  'q' is put back into the datastore.
+		var q Quiz
+		if err1 := datastore.Get(c, k, &q); err1 != nil {
 			resp[ErrorField] = ErrorDatastore
 			return err1
 		}
@@ -151,7 +152,7 @@ func quizUpdateHandler(w http.ResponseWriter, r *http.Request, c appengine.Conte
 		qm, _ := json.Marshal(nq.Questions)
 		q.QuestionsM = string(qm)
 
-		if _, err1 = datastore.Put(c, k, &q); err1 != nil {
+		if _, err1 := datastore.Put(c, k, &q); err1 != nil {
 			resp[ErrorField] = ErrorDatastore
 			c.Infof("Could not put new quiz: %v", err1)
 			return errors.New("put failed")
@@ -174,15 +175,6 @@ func quizCreateHandler(w http.ResponseWriter, r *http.Request, c appengine.Conte
 	}
 }
 
-func queryHandler(w http.ResponseWriter, r *http.Request) {
-	resp := make(map[string]string)
-	resp["val"] = r.FormValue("q")
-	w.Header().Set("Content-Type", "text/javascript")
-	if b, err := json.Marshal(resp); err == nil {
-		w.Write(b)
-	}
-}
-
 func quizGetHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, u *user.User, resp map[string]interface{}) {
 	var q Quiz
 	quizID := r.FormValue("q")
@@ -201,7 +193,7 @@ func quizGetHandler(w http.ResponseWriter, r *http.Request, c appengine.Context,
 }
 
 func quizListHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, u *user.User, resp map[string]interface{}) {
-	var qlist []Quiz = make([]Quiz, 0)
+	qlist := make([]Quiz, 0)
 	q := datastore.NewQuery("Quiz").Filter("OwnerID =", u.ID).Order("Created")
 	for t := q.Run(c); ; {
 		var quiz Quiz
