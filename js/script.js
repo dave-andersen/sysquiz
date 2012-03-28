@@ -161,7 +161,6 @@ sysquiz.changeAnswerType = function(el) {
 }
 
 sysquiz.editQuizGotQuizInfo = function(r) {
-    "use strict";
     var quiz = r['quiz'];
     $("#revertBtn").unbind('click').click({id: quiz.ID}, sysquiz.editQuiz);
     $('#editName').val(quiz.Title);
