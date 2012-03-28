@@ -1,0 +1,13 @@
+- Delete quiz button with alert confirmation
+
+- Taking quiz interface first go
+  - create / email links for quiz-takers
+  - separate overall UI into making / taking / grading
+
+- Add a front page 
+
+- Improve aesthetics of making quiz page
+
+- More serious code review
+
+- Explore options for testing frameworks...

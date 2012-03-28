@@ -17,13 +17,13 @@ $(document).ready(function() {
     sysquiz.fetchQuizList();
     $("#createBtn").click(sysquiz.createQuiz);
     $("#saveBtn").click(sysquiz.saveQuiz);
-    $("#newitem").click(sysquiz.newItem);
-    $("#questionlist").sortable();
+    $("#newItem").click(sysquiz.newItem);
+    $("#questionList").sortable();
 });
 
 sysquiz.newItem = function(event) {
     event.preventDefault();
-    sysquiz.appendNewQuestion($('#questionlist'));
+    sysquiz.appendNewQuestion($('#questionList'));
 }
 
 sysquiz.parseQuestion = function(el) {
@@ -43,7 +43,7 @@ sysquiz.saveQuiz = function(event) {
 	      Title: $('#editName').val(),
 	      Questions: new Array() };
 
-    $('#questionlist li').each(function(i, el) {
+    $('#questionList li').each(function(i, el) {
 	q.Questions[i] = sysquiz.parseQuestion($(this));
     });
     var as_string = JSON.stringify(q);
@@ -69,7 +69,7 @@ sysquiz.saveQuizDone = function(r) {
 
 sysquiz.createQuiz = function(event) {
     event.preventDefault();
-    var neLabel = $("#createquiz label#nameError");
+    var neLabel = $("#createQuiz label#nameError");
     var nameInput = $('input#name');
     neLabel.hide();
     
@@ -167,7 +167,7 @@ sysquiz.editQuizGotQuizInfo = function(r) {
     $('#editID').val(quiz.ID);
     $('#editVersion').val(quiz.Version);
     $('#edit').show();
-    var ql = $('#questionlist');
+    var ql = $('#questionList');
     ql.empty();
     if (quiz.Questions) {
 	for (var i = 0; i < quiz.Questions.length; i++) {
