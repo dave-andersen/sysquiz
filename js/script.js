@@ -1,6 +1,6 @@
 /* Author: David G. Andersen
  *
- * requires jquery to be loaded already
+ * requires jquery and jquery-ui to be loaded already
  */
 "use strict";
 
