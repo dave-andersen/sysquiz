@@ -84,15 +84,20 @@
     <option value="int">Integer answer</option>
     <option value="float">Floating-point answer</option>
     <option value="dur">Duration (time)</option>
-    </select><br />
+    </select>
+    <input type="checkbox" name="showWork" id="showWork">Show work input box</input><br />
       <label>Answer:</label>
-      <textarea name="textAnswer" id="textAnswer" class="ui-widget-content" rows="1" cols="40"></textarea>
+      <textarea name="textAnswer" id="textAnswer" class="ui-widget-content" rows="1" cols="40"></textarea><br />
+      <div id="showWorkDiv" style="display:none;"><label for="showWorkInput">Work: </label>
+      <textarea name="showWorkInput" id="showWorkInput" class="ui-widget-content" rows=3 cols="40"></textarea>
+      </div><br />
+      <input type="checkbox" name="isStop" id="isStop">Force submit after this question</input>
       </li>
     </div>
   <h2>Edit Quiz</h2>
   <form>
    <fieldset>
-     <input style="display:none;" type="hidden" id="editId" value="" />
+     <input style="display:none;" type="hidden" id="editID" value="" />
      <input style="display:none;" type="hidden" id="editVersion" value="" />
      <label for="name" id="editNameLabel">Quiz name</label>
      <input type="text" name="editName" id="editName" value="" class="text-input" />

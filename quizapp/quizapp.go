@@ -26,6 +26,9 @@ type Question struct {
 	Answer        string
 	AnswerType    string // "text", "int", "float", ...
 	IsStop        bool   // Must they answer this question before going on?
+	ShowWork      bool   // Give them a 'show your work' dialog?
+	Work          string
+
 }
 
 type Quiz struct {
@@ -126,11 +129,14 @@ func quizUpdateHandler(w http.ResponseWriter, r *http.Request, c appengine.Conte
 		}
 		q.Version++
 		
-		// Sanitize the incoming quiz.  ALL FIELDS - including deep into questions
-		// BE CAREFUL HERE.  Likely place to introduce xss vuln.
-		q.Title = html.EscapeString(nq.Title)
+		// Design change:  Javascript _must_ put into the .text()
+		// or .val() of a field, not the .html().  Now storing
+		// unescaped data.
+		//q.Title = html.EscapeString(nq.Title)
+		q.Title = nq.Title
 		for i, qu := range nq.Questions {
-			nq.Questions[i].Text = html.EscapeString(qu.Text)
+			//nq.Questions[i].Text = html.EscapeString(qu.Text)
+			//nq.Questions[i].Work = html.EscapeString(qu.Work)
 			if !valid_atype[qu.AnswerType] {
 				resp[ErrorField] = ErrorFormat
 				c.Infof("Invalid answer type: ", qu.AnswerType)
