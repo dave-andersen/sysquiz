@@ -49,11 +49,8 @@ type JSONError struct {
 }
 
 var (
-	pageTemplate     = template.Must(template.ParseFiles("html/page.html", "html/boring.html"))
-	adminTemplate    = template.Must(template.ParseFiles("html/page.html", "html/admin.html"))
-	instanceHitCount = 0
+	pageTemplate, adminTemplate *template.Template
 
-	ErrorField = "error"
 	// Error codes to use in the JSON response
 	ErrorAuth = JSONError{"AUTH", 401, "Authentication required", nil}
 	ErrorDatastore = JSONError{"DATA", 510, "Internal Datastore Error", nil}
@@ -62,6 +59,10 @@ var (
 	ErrorOther = JSONError{"OTHER", 500, "Other error", nil}
 
 	valid_atype = map[string]bool { "text" : true, "mc": true, "int": true, "float": true, "duration": true }
+)
+
+const (
+	ErrorField = "error"
 )
 
 func genQuizID() string {
@@ -73,6 +74,8 @@ func genQuizID() string {
 }
 
 func init() {
+	pageTemplate = template.Must(template.ParseFiles("html/page.html", "html/boring.html"))
+	adminTemplate = template.Must(template.ParseFiles("html/page.html", "html/admin.html"))
 	http.HandleFunc("/admin", adminHandler)
 	http.HandleFunc("/q", queryHandler)
 	http.Handle("/ql", AuthHandlerFunc(quizListHandler))
