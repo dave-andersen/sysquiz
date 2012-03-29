@@ -131,9 +131,9 @@ sysquiz.editQuiz = function(event) {
 }
 
 sysquiz.appendNewQuestion = function(ql) {
-    var qhtml = $('#questionInput').html()
-    ql.append(qhtml);
-    var el = ql.find('li').last();  // xxx - this is n^2. :(
+    var qEntry = $('#edit #questionInput');
+    var el = qEntry.clone().show();
+    ql.append(el);
     el.find("#removeQBtn").click({e: el}, function(event) {
 	event.data.e.remove();
 	return false;
