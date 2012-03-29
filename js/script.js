@@ -152,9 +152,9 @@ sysquiz.editQuiz = function(event) {
 }
 
 sysquiz.appendNewQuestion = function(ql) {
-    var qEntry = $('#widgets #questionInput');
+    var qEntry = $('#widgets .questionInput');
     var el = qEntry.clone(false).appendTo(ql);
-    el.find("#removeQBtn").click({e: el}, function(event) {
+    el.find(".removeQBtn").click({e: el}, function(event) {
 	event.data.e.remove();
 	return false;
     });
