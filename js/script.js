@@ -28,11 +28,11 @@ sysquiz.newItem = function(event) {
 }
 
 sysquiz.parseQuestion = function(el) {
-    var q = { Text: el.find('#questionText').val(),
-	      AnswerType: el.find('#answerType').val(),
-	      Work: el.find('#showWorkInput').val(),
-	      ShowWork: el.find("#showWork").is(':checked'),
-	      IsStop: el.find("#isStop").is(':checked')
+    var q = { Text: el.find('[name="questionText"]').val(),
+	      AnswerType: el.find('[name="answerType"]').val(),
+	      Work: el.find('[name="showWorkInput"]').val(),
+	      ShowWork: el.find('[name="showWork"]').is(':checked'),
+	      IsStop: el.find('[name="isStop"]').is(':checked')
 	    };
     return q;
 }
@@ -158,13 +158,13 @@ sysquiz.appendNewQuestion = function(ql) {
 	event.data.e.remove();
 	return false;
     });
-    el.find("#answerType").change({e: el}, function(event) {
+    el.find('[name="answerType"]').change({e: el}, function(event) {
 	sysquiz.changeAnswerType(event.data.e);
     });
-    el.find("#showWork").change({e: el}, function(event) { 
+    el.find('[name="showWork"]').change({e: el}, function(event) {
 	sysquiz.updateAnswerDisplay(event.data.e);
     });
-    el.find("#isStop").change({e: el}, function(event) {
+    el.find('[name="isStop"]').change({e: el}, function(event) {
 	sysquiz.updateAnswerDisplay(event.data.e);
     });
     
@@ -177,7 +177,7 @@ sysquiz.appendNewQuestion = function(ql) {
 
 sysquiz.changeAnswerType = function(el) {
     //el.find('.answerbox').hide();
-    var atype = el.find("#answerType").val();
+    var atype = el.find('[name="answerType"]').val();
     // multiple choice isn't handled yet.
     // I want them to be able to resize the text input box for answer.
     // and save it.
@@ -197,11 +197,11 @@ sysquiz.editQuizGotQuizInfo = function(r) {
 	for (var i = 0; i < quiz.Questions.length; i++) {
 	    var q = quiz.Questions[i];
 	    var el = sysquiz.appendNewQuestion(ql);
-	    el.find("#questionText").val(q.Text);
-	    el.find("#answerType").val(q.AnswerType);
-	    el.find("#isStop").prop("checked", q.IsStop);
-	    el.find("#showWork").prop("checked", q.ShowWork);
-	    el.find("#showWorkInput").val(q.Work);
+	    el.find('[name="questionText"]').val(q.Text);
+	    el.find('[name="answerType"]').val(q.AnswerType);
+	    el.find('[name="isStop"]').prop("checked", q.IsStop);
+	    el.find('[name="showWork"]').prop("checked", q.ShowWork);
+	    el.find('[name="showWorkInput"]').val(q.Work);
 	    sysquiz.updateAnswerDisplay(el)
 	    // throw in an answer div so we can delete the whole thing
 	    // if they change the type...
@@ -211,10 +211,10 @@ sysquiz.editQuizGotQuizInfo = function(r) {
 }
 
 sysquiz.updateAnswerDisplay = function(el) {
-    el.find("#showWorkDiv").toggle(el.find("#showWork").is(':checked'));
+    el.find('[name="showWorkDiv"]').toggle(el.find('[name="showWork"]').is(':checked'));
 
     // xxx - don't like that this knows so much about the CSS.
-    if (el.find("#isStop").is(':checked')) {
+    if (el.find('[name="isStop"]').is(':checked')) {
 	el.css("border-bottom", "8px solid grey");
     } else {
 	el.css("border-bottom", "2px dashed grey");
