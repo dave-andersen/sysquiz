@@ -39,12 +39,13 @@
   <div role="main">
     <p><div id="mainstatus"></div></p>
     <p><div id="val"></div></p>
-    <ul id="quizlist"></ul>
+    <ul id="quizList"></ul>
 
   </div>
 
   <!-- stored display stuff that we'll use within other components -->
   <div id="widgets" style="display:none;">
+    <li id="quizListEntry"><a id="quizName" href="#"></a> <span id="quizID"></span> (created <span id="quizCreated"></span>)</li>
     <input id="duration" name="duration" value="" type="text-input" />
     <select id="DurationUnits">
       <option value="y">years</option>
@@ -118,7 +119,7 @@
   </form>
   </div>
 
-  <div id="statusbox">
+  <div id="statusBox">
     <p>Status: <span id="status"></span></p>
   </div>
 

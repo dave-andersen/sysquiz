@@ -110,13 +110,16 @@ sysquiz.fetchQuizListDone = function(r) {
 	return false
     }
     var ql = r['quizlist']
-    var pageQl = $('#quizlist');
+    var pageQl = $('#quizList');
     pageQl.empty();
+    var qlEntry = $('#quizListEntry');
     for (var i = 0; i < ql.length; i++) {
-	var editlink = "editlink_"+ql[i].ID;
-	pageQl.append('<li><a href="#edit" id="'+editlink+'"></a> - '+ql[i].ID+' ('+ql[i].Created+')</li>');
-	// THIS MUST HAPPEN AS .text(), otherwise we introduce XSS
-	pageQl.find('#'+editlink).text(ql[i].Title).click({id: ql[i].ID}, sysquiz.editQuiz);
+	var el = qlEntry.clone();
+	// THESE MUST HAPPEN AS .text(), otherwise we introduce XSS
+	el.find("#quizName").text(ql[i].Title).click({id: ql[i].ID}, sysquiz.editQuiz);
+	el.find("#quizCreated").text(ql[i].Created);
+	el.find("#quizID").text(ql[i].ID);
+	pageQl.append(el);
     }
 }
 
