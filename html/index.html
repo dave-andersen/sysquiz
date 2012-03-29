@@ -45,7 +45,7 @@
 
   <!-- stored display stuff that we'll use within other components -->
   <div id="widgets" style="display:none;">
-    <li id="quizListEntry"><a id="quizName" href="#"></a> <span id="quizID"></span> (created <span id="quizCreated"></span>)</li>
+    <li id="quizListEntry"><a id="quizName" href="#"></a> <span id="quizID"></span> (created <span id="quizCreated"></span>) [<a id="quizDelete" href="#">delete this quiz</a>]</li>
     <input id="duration" name="duration" value="" type="text-input" />
     <select id="DurationUnits">
       <option value="y">years</option>
@@ -58,23 +58,8 @@
       <option value="ns">ns</option>
       <option value="ps">ps</option>
     </select>
-  </div>
 
-  <div id="createQuiz">
-   <form id="newQuiz" action="">
-    <fieldset>
-    <label for="name" id="nameLabel">Quiz name</label>    
-    <input type="text" name="name" id="name" value="" class="text-input" />
-    <label class="error" for="name" id="nameError" style="display:none;">(Don't leave blank)</label>
-    <br />
-    <input type="submit" name="create" class="button" id="createBtn" value="Create" />
-   </fieldset>
-   </form>
-  </div>
-
-  <div id="edit" style="display:none;">
-    <!-- text for the question input box.  Not directly used - just its html -->
-      <li id="questionInput" style="display:none;">(<a href="#" id="removeQBtn">remove</a>)
+      <li id="questionInput">(<a href="#" id="removeQBtn">remove</a>)
 <label for="question_text">Question text</label>
       <input type="text" name="questionText" id="questionText" class="text-input" /> <br />
       <label for="answerType">Answer type:</label>
@@ -93,6 +78,22 @@
       </div><br />
       <input type="checkbox" name="isStop" id="isStop">Force submit after this question</input>
       </li>
+
+  </div>
+
+  <div id="createQuiz">
+   <form id="newQuiz" action="">
+    <fieldset>
+    <label for="name" id="nameLabel">Quiz name</label>    
+    <input type="text" name="name" id="name" value="" class="text-input" />
+    <label class="error" for="name" id="nameError" style="display:none;">(Don't leave blank)</label>
+    <br />
+    <input type="submit" name="create" class="button" id="createBtn" value="Create" />
+   </fieldset>
+   </form>
+  </div>
+
+  <div id="edit" style="display:none;">
   <h2>Edit Quiz</h2>
   <form>
    <fieldset>

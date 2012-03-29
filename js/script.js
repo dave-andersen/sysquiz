@@ -112,14 +112,13 @@ sysquiz.fetchQuizListDone = function(r) {
     var ql = r['quizlist']
     var pageQl = $('#quizList');
     pageQl.empty();
-    var qlEntry = $('#quizListEntry');
+    var qlEntry = $('#widgets #quizListEntry');
     for (var i = 0; i < ql.length; i++) {
-	var el = qlEntry.clone();
+	var el = qlEntry.clone(false).appendTo(pageQl);
 	// THESE MUST HAPPEN AS .text(), otherwise we introduce XSS
 	el.find("#quizName").text(ql[i].Title).click({id: ql[i].ID}, sysquiz.editQuiz);
 	el.find("#quizCreated").text(ql[i].Created);
 	el.find("#quizID").text(ql[i].ID);
-	pageQl.append(el);
     }
 }
 
@@ -131,9 +130,8 @@ sysquiz.editQuiz = function(event) {
 }
 
 sysquiz.appendNewQuestion = function(ql) {
-    var qEntry = $('#edit #questionInput');
-    var el = qEntry.clone().show();
-    ql.append(el);
+    var qEntry = $('#widgets #questionInput');
+    var el = qEntry.clone(false).appendTo(ql);
     el.find("#removeQBtn").click({e: el}, function(event) {
 	event.data.e.remove();
 	return false;
