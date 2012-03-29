@@ -45,7 +45,8 @@
 
   <!-- stored display stuff that we'll use within other components -->
   <div id="widgets" style="display:none;">
-    <li id="quizListEntry"><a id="quizName" href="#"></a> <span id="quizID"></span> (created <span id="quizCreated"></span>) [<a id="quizDelete" href="#">delete this quiz</a>]</li>
+    <li id="quizListEntry"><a id="quizName" href="#"></a> <span id="quizID"></span> (created <span id="quizCreated"></span>)</li>
+
     <input id="duration" name="duration" value="" type="text-input" />
     <select id="DurationUnits">
       <option value="y">years</option>
@@ -59,10 +60,10 @@
       <option value="ps">ps</option>
     </select>
 
-      <li id="questionInput">(<a href="#" id="removeQBtn">remove</a>)
-<label for="question_text">Question text</label>
-      <input type="text" name="questionText" id="questionText" class="text-input" /> <br />
-      <label for="answerType">Answer type:</label>
+    <li id="questionInput">(<a href="#" id="removeQBtn">remove</a>)
+    <label for="question_text">Question text</label>
+    <input type="text" name="questionText" id="questionText" class="text-input" /> <br />
+    <label for="answerType">Answer type:</label>
     <select id="answerType">
     <option value="text" selected>Text answer</option>
     <option value="mc">Multiple choice</option>
@@ -94,7 +95,7 @@
   </div>
 
   <div id="edit" style="display:none;">
-  <h2>Edit Quiz</h2>
+  <h2>Edit Quiz [<a id="quizDelete" href="#">delete this quiz</a>]</h2>
   <form>
    <fieldset>
      <input style="display:none;" type="hidden" id="editID" value="" />

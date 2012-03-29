@@ -81,6 +81,7 @@ func init() {
 	http.Handle("/qc", AuthHandlerFunc(quizCreateHandler))
 	http.Handle("/qget", AuthHandlerFunc(quizGetHandler))
 	http.Handle("/qu", AuthHandlerFunc(quizUpdateHandler))
+	http.Handle("/qdel", AuthHandlerFunc(quizDeleteHandler))
 }
 
 type AuthHandlerFunc func(http.ResponseWriter, *http.Request, appengine.Context, *user.User, map[string]interface{})
@@ -102,6 +103,40 @@ func jsonAuthHandler(w http.ResponseWriter, r *http.Request, handler func(http.R
 	b, _ := json.Marshal(resp)
 	w.Write(b)
 	return
+}
+
+func quizDeleteHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, u *user.User, resp map[string]interface{}) {
+	var nq Quiz
+	if err := json.Unmarshal([]byte(r.FormValue("q")), &nq); err != nil {
+		c.Infof("Unmarshal json failed on %v", r.FormValue("q"))
+		resp[ErrorField] = ErrorOther
+		return
+	}
+	quizID := nq.ID
+	k := datastore.NewKey(c, "Quiz", quizID, 0, nil)
+	err := datastore.RunInTransaction(c, func(c appengine.Context) error {
+		var q Quiz
+		if err1 := datastore.Get(c, k, &q); err1 != nil {
+			resp[ErrorField] = ErrorDatastore
+			return err1
+		}
+		if q.OwnerID != u.ID {
+			resp[ErrorField] = ErrorAuth
+			return errors.New("Owner mismatch")
+		}
+		if (q.Version != nq.Version) {
+			resp[ErrorField] = ErrorVersion
+			return errors.New("Version mismatch")
+		}
+		if err1 := datastore.Delete(c, k); err1 != nil {
+			resp[ErrorField] = ErrorDatastore
+			return err1
+		}
+		return nil
+	}, nil) // xxx - this function is kinda long for an inline one...
+	if err != nil {
+		c.Infof("Transactional update failed: ", err)
+	}
 }
 
 func quizUpdateHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, u *user.User, resp map[string]interface{}) {

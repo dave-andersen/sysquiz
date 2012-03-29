@@ -12,6 +12,7 @@ sysquiz.FETCH_QUIZLIST = "Fetching quiz list";
 sysquiz.CREATE_QUIZ = "Creating quiz";
 sysquiz.FETCH_QUIZ = "Fetching quiz data";
 sysquiz.SAVE_QUIZ = "Saving quiz";
+sysquiz.DELETE_QUIZ = "Deleting quiz";
 
 $(document).ready(function() {
     sysquiz.fetchQuizList();
@@ -122,6 +123,27 @@ sysquiz.fetchQuizListDone = function(r) {
     }
 }
 
+sysquiz.deleteQuiz = function(event) {
+    event.preventDefault();
+    var quiz = event.data.q;
+    var really = confirm("Really delete quiz "+quiz.Title+" and all of its associated data and responses?");
+    if (really) {
+	sysquiz.status(sysquiz.DELETE_QUIZ);
+	$("div#edit").hide()
+	var as_string = JSON.stringify(quiz);
+	// silly, but resending the full quiz lets us get the version easily.
+	$.post("/qdel", {q: as_string}, sysquiz.deleteQuizDone, "json");
+    }
+}
+
+sysquiz.deleteQuizDone = function(r) {
+    sysquiz.removeStatus(sysquiz.REMOVE_QUIZ);
+    if (r["error"]) {
+	alert("Could not delete quiz: " + r["error"].message);
+    }
+    sysquiz.fetchQuizList();
+}
+
 sysquiz.editQuiz = function(event) {
     event.preventDefault();
     var quizID = event.data.id;
@@ -169,6 +191,7 @@ sysquiz.editQuizGotQuizInfo = function(r) {
     $('#editVersion').val(quiz.Version);
     $('#edit').show();
     var ql = $('#questionList');
+    $("#quizDelete").unbind('click').click({q: quiz}, sysquiz.deleteQuiz);
     ql.empty();
     if (quiz.Questions) {
 	for (var i = 0; i < quiz.Questions.length; i++) {
