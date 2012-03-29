@@ -113,13 +113,13 @@ sysquiz.fetchQuizListDone = function(r) {
     var ql = r['quizlist']
     var pageQl = $('#quizList');
     pageQl.empty();
-    var qlEntry = $('#widgets #quizListEntry');
+    var qlEntry = $('#widgets .quizListEntry');
     for (var i = 0; i < ql.length; i++) {
 	var el = qlEntry.clone(false).appendTo(pageQl);
 	// THESE MUST HAPPEN AS .text(), otherwise we introduce XSS
-	el.find("#quizName").text(ql[i].Title).click({id: ql[i].ID}, sysquiz.editQuiz);
-	el.find("#quizCreated").text(ql[i].Created);
-	el.find("#quizID").text(ql[i].ID);
+	el.find(".quizName").text(ql[i].Title).click({id: ql[i].ID}, sysquiz.editQuiz);
+	el.find(".quizCreated").text(ql[i].Created);
+	el.find(".quizID").text(ql[i].ID);
     }
 }
 
