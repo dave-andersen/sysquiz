@@ -233,9 +233,10 @@ ol#questionList li {
 .quizListEntry .quizID { font-size: 50%; color: #666; }
 #quizDelete { color: #e00; }
 
-
-
-
+div#userBox {
+    color: 000;
+    position: absolute;  top:0; right:0;
+}
 
 
 

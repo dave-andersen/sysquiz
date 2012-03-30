@@ -18,6 +18,7 @@ import (
 type Page struct {
 	Title   string
 	Content string
+	Logout  string
 }
 
 type Question struct {
@@ -49,7 +50,7 @@ type JSONError struct {
 }
 
 var (
-	pageTemplate, adminTemplate *template.Template
+	indexTemplate, createTemplate, pageTemplate, adminTemplate *template.Template
 
 	// Error codes to use in the JSON response
 	ErrorAuth = JSONError{"AUTH", 401, "Authentication required", nil}
@@ -76,7 +77,10 @@ func genQuizID() string {
 func init() {
 	pageTemplate = template.Must(template.ParseFiles("html/page.html", "html/boring.html"))
 	adminTemplate = template.Must(template.ParseFiles("html/page.html", "html/admin.html"))
-	http.HandleFunc("/admin", adminHandler)
+	createTemplate = template.Must(template.ParseFiles("html/page.html", "html/create_inner.html"))
+	indexTemplate = template.Must(template.ParseFiles("html/page.html", "html/index_inner.html"))
+	http.HandleFunc("/", indexHandler);
+	http.HandleFunc("/create", createHandler);
 	http.Handle("/ql", AuthHandlerFunc(quizListHandler))
 	http.Handle("/qc", AuthHandlerFunc(quizCreateHandler))
 	http.Handle("/qget", AuthHandlerFunc(quizGetHandler))
@@ -247,17 +251,23 @@ func quizListHandler(w http.ResponseWriter, r *http.Request, c appengine.Context
 	resp["quizlist"] = qlist
 }
 
-func adminHandler(w http.ResponseWriter, r *http.Request) {
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	p := &Page{Title: "Quizzer"}
+	indexTemplate.Execute(w, p);
+}
+
+func createHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	var p *Page
 	if u := user.Current(c); u == nil {
-		url, _ := user.LoginURL(c, "/admin")
+		url, _ := user.LoginURL(c, "/create")
 		p = &Page{Title: "Authentication required",
 			Content: fmt.Sprintf(`<a href="%s">Sign in or register</a>`, url)}
+		adminTemplate.Execute(w, p)
 	} else {
-		logouturl, _ := user.LogoutURL(c, "/admin")
-		p = &Page{Title: "Admin",
-			Content: fmt.Sprintf("Hi, %s, this is your admin page. <a href='%s'>logout</a> or <a href='/'>back to main</a>", u, logouturl)}
+		logouturl, _ := user.LogoutURL(c, "/")
+		p = &Page{Title: "Quizzer 0.00000gamma",
+		Logout: fmt.Sprintf("%s (<a href='%s'>logout</a>)", u, logouturl)}
+		createTemplate.Execute(w, p)
 	}
-	adminTemplate.Execute(w, p)
 }

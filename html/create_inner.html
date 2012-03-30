@@ -1,0 +1,95 @@
+{{define "Contentblock"}}
+  <div id="userBox">
+    <p>{{.Logout}}</p>
+  </div>
+    <p><div id="mainstatus"></div></p>
+    <p><div id="val"></div></p>
+    <ul id="quizList"></ul>
+
+  </div>
+
+  <!-- stored display stuff that we'll use within other components -->
+  <div id="widgets" style="display:none;">
+    <li class="quizListEntry"><a class="quizName" href="#"></a> <span class="quizID"></span> (created <span class="quizCreated"></span>)</li>
+
+    <input id="duration" name="duration" value="" type="text-input" />
+    <select id="DurationUnits">
+      <option value="y">years</option>
+      <option value="d">days</option>
+      <option value="h">hours</option>
+      <option value="m">minutes</option>
+      <option value="s" selected>s</option>
+      <option value="ms">ms</option>
+      <option value="us">&mu;s</option>
+      <option value="ns">ns</option>
+      <option value="ps">ps</option>
+    </select>
+
+    <li class="questionInput">(<a href="#" class="removeQBtn">remove</a>)
+    <label for="question_text">Question text</label>
+    <input type="text" name="questionText" class="text-input" /> <br />
+    <label for="answerType">Answer type:</label>
+    <select name="answerType">
+    <option value="text" selected>Text answer</option>
+    <option value="mc">Multiple choice</option>
+    <option value="int">Integer answer</option>
+    <option value="float">Floating-point answer</option>
+    <option value="dur">Duration (time)</option>
+    </select>
+    <input type="checkbox" name="showWork">Show work input box</input><br />
+      <label>Answer:</label>
+      <textarea name="textAnswer" class="ui-widget-content" rows="1" cols="40"></textarea><br />
+      <div name="showWorkDiv" style="display:none;"><label for="showWorkInput">Work: </label>
+      <textarea name="showWorkInput" class="ui-widget-content" rows=3 cols="40"></textarea>
+      </div><br />
+      <input type="checkbox" name="isStop">Force submit after this question</input>
+      </li>
+
+  </div>
+
+  <div id="createQuiz">
+   <form id="newQuiz" action="">
+    <fieldset>
+    <label for="name" id="nameLabel">Quiz name</label>    
+    <input type="text" name="name" id="name" value="" class="text-input" />
+    <label class="error" for="name" id="nameError" style="display:none;">(Don't leave blank)</label>
+    <br />
+    <input type="submit" name="create" class="button" id="createBtn" value="Create" />
+   </fieldset>
+   </form>
+  </div>
+
+  <div id="edit" style="display:none;">
+  <h2>Edit Quiz [<a id="quizDelete" href="#">delete this quiz</a>]</h2>
+  <form>
+   <fieldset>
+     <input style="display:none;" type="hidden" id="editID" value="" />
+     <input style="display:none;" type="hidden" id="editVersion" value="" />
+     <label for="name" id="editNameLabel">Quiz name</label>
+     <input type="text" name="editName" id="editName" value="" class="text-input" />
+    <label class="error" for="name" id="nameError" style="display:none;">(Don't leave blank)</label>
+    <h3>Questions</h3>
+    <p>(drag to re-order)</p>
+    <ol id="questionList">
+
+    </ol>
+    <br />
+    <input type="submit" name="newItem" class="button" id="newItem" value="Add New Item" />
+    <br />
+    <p>
+    <input type="submit" name="save" class="button" id="saveBtn" value="Save Changes" />
+    <input type="submit" name="revert" class="button" id="revertBtn" value="Revert to Last Saved" />
+</p>
+
+   </fieldset>
+  </form>
+  </div>
+{{end}}
+
+{{define "Footerblock"}}
+  <div id="statusBox">
+    <p>Status: <span id="status"></span></p>
+  </div>
+
+
+{{end}}
