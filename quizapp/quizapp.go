@@ -8,7 +8,6 @@ import (
 	"encoding/base32"
 	"encoding/json"
 	"fmt"
-	"html"
 	"net/http"
 	"text/template"
 	"time"
@@ -172,14 +171,10 @@ func quizUpdateHandler(w http.ResponseWriter, r *http.Request, c appengine.Conte
 		}
 		q.Version++
 		
-		// Design change:  Javascript _must_ put into the .text()
-		// or .val() of a field, not the .html().  Now storing
-		// unescaped data.
-		//q.Title = html.EscapeString(nq.Title)
+		// We store unescaped data.  Javascript _must_ put into the .text()
+		// or .val() of a field, not the .html().
 		q.Title = nq.Title
 		for i, qu := range nq.Questions {
-			//nq.Questions[i].Text = html.EscapeString(qu.Text)
-			//nq.Questions[i].Work = html.EscapeString(qu.Work)
 			if !valid_atype[qu.AnswerType] {
 				resp[ErrorField] = ErrorFormat
 				c.Infof("Invalid answer type: ", qu.AnswerType)
@@ -205,7 +200,6 @@ func quizUpdateHandler(w http.ResponseWriter, r *http.Request, c appengine.Conte
 
 func quizCreateHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, u *user.User, resp map[string]interface{}) {
 	qname := r.FormValue("qname")
-	qname = html.EscapeString(qname)
 	// validate
 	q := &Quiz{qname, genQuizID(), time.Now(), u.ID, "", []Question{}, 0}
 	k := datastore.NewKey(c, "Quiz", q.ID, 0, nil)
