@@ -232,5 +232,5 @@ sysquiz.removeStatus = function(s) {
 // to appropriate validators
 sysquiz.appendAnswerDuration = function(el) {
     el.append($('#widgets #duration'));
-    el.append($('#widgets #DurationUnits'));
+    el.append($('#widgets #durationUnits'));
 }
