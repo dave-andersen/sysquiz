@@ -10,7 +10,7 @@
 
   <!-- stored display stuff that we'll use within other components -->
   <div id="widgets" style="display:none;">
-    <li class="quizListEntry"><a class="quizName" href="#"></a> <span class="quizID"></span> (created <span class="quizCreated"></span>)</li>
+    <li class="quizListEntry"><a class="quizName" href="#"></a> <span class="quizID"></span> (created <span class="quizCreated"></span>) [<a class="quizAdmin" href="#">Administer</span>]</li>
 
     <input id="duration" name="duration" value="" type="text-input" />
     <select id="durationUnits">
@@ -57,6 +57,14 @@
     <input type="submit" name="create" class="button" id="createBtn" value="Create" />
    </fieldset>
    </form>
+  </div>
+
+  <div id="admin" style="display:none;">
+  <h2>Administer Quiz</h2>
+  <ul>
+    <li>quiz status: <span id="enabledStatus"></span>  (<a id="toggleEnabled"></a>)</li>
+  </ul>
+  
   </div>
 
   <div id="edit" style="display:none;">

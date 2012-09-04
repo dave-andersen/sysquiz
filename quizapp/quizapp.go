@@ -34,11 +34,13 @@ type Question struct {
 type Quiz struct {
 	Title       string
 	ID          string
+	Key         string `json:"-"` // Don't disclose this.
 	Created     time.Time
 	OwnerID     string `json:"-"` // ownerID not sent via JSON
 	QuestionsM  string `json:"-"`// marshaled into JSON for storage in the datastore
 	Questions   []Question `datastore:"-"` // sent via the network
 	Version     int // for multiple writer consistency
+	Enabled     bool
 }
 
 type JSONError struct {
@@ -85,6 +87,8 @@ func init() {
 	http.Handle("/qget", AuthHandlerFunc(quizGetHandler))
 	http.Handle("/qu", AuthHandlerFunc(quizUpdateHandler))
 	http.Handle("/qdel", AuthHandlerFunc(quizDeleteHandler))
+	http.Handle("/qenable", AuthHandlerFunc(quizEnableHandler))
+	http.Handle("/qdisable", AuthHandlerFunc(quizDisableHandler))
 }
 
 type AuthHandlerFunc func(http.ResponseWriter, *http.Request, appengine.Context, *user.User, map[string]interface{})
@@ -141,6 +145,45 @@ func quizDeleteHandler(w http.ResponseWriter, r *http.Request, c appengine.Conte
 		c.Infof("Transactional update failed: ", err)
 	}
 }
+
+func quizEnableHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, u *user.User, resp map[string]interface{}) {
+	enableInternal(w, r, c, u, resp, true)
+}
+func quizDisableHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, u *user.User, resp map[string]interface{}) {
+	enableInternal(w, r, c, u, resp, false)
+}
+
+func enableInternal(w http.ResponseWriter, r *http.Request, c appengine.Context, u *user.User, resp map[string]interface{}, enabled bool) {
+	quizID := r.FormValue("q")
+	k := datastore.NewKey(c, "Quiz", quizID, 0, nil)
+	// sanity check quizID, please
+	err := datastore.RunInTransaction(c, func(c appengine.Context) error {
+		var q Quiz
+		if err1 := datastore.Get(c, k, &q); err1 != nil {
+			resp[ErrorField] = ErrorDatastore
+			return err1
+		}
+		if q.OwnerID != u.ID {
+			resp[ErrorField] = ErrorAuth
+			return errors.New("Owner mismatch")
+		}
+		
+		q.Enabled = enabled
+		// We store unescaped data.  Javascript _must_ put into the .text()
+		// or .val() of a field, not the .html().
+
+		if _, err1 := datastore.Put(c, k, &q); err1 != nil {
+			resp[ErrorField] = ErrorDatastore
+			c.Infof("Could not put new quiz: %v", err1)
+			return errors.New("put failed")
+		}
+		return nil
+	}, nil)
+	if err != nil {
+		c.Infof("Transactional update failed: ", err)
+	}
+}
+
 
 func quizUpdateHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, u *user.User, resp map[string]interface{}) {
 	var nq Quiz
@@ -201,7 +244,7 @@ func quizUpdateHandler(w http.ResponseWriter, r *http.Request, c appengine.Conte
 func quizCreateHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, u *user.User, resp map[string]interface{}) {
 	qname := r.FormValue("qname")
 	// validate
-	q := &Quiz{qname, genQuizID(), time.Now(), u.ID, "", []Question{}, 0}
+	q := &Quiz{qname, genQuizID(), genQuizID(), time.Now(), u.ID, "", []Question{}, 0, false}
 	k := datastore.NewKey(c, "Quiz", q.ID, 0, nil)
 	if _, err := datastore.Put(c, k, q); err != nil {
 		resp[ErrorField] = ErrorDatastore

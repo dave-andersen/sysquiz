@@ -117,9 +117,40 @@ sysquiz.fetchQuizListDone = function(r) {
     for (var i = 0; i < ql.length; i++) {
 	var el = qlEntry.clone(false).appendTo(pageQl);
 	// THESE MUST HAPPEN AS .text(), otherwise we introduce XSS
-	el.find(".quizName").text(ql[i].Title).click({id: ql[i].ID}, sysquiz.editQuiz);
+	el.find(".quizName").text(ql[i].Title).unbind('click').click({id: ql[i].ID}, sysquiz.editQuiz);
 	el.find(".quizCreated").text(ql[i].Created);
 	el.find(".quizID").text(ql[i].ID);
+	el.find(".quizAdmin").unbind('click').click({id: ql[i].ID}, sysquiz.adminQuiz);
+    }
+}
+
+sysquiz.adminQuiz = function(event) {
+    event.preventDefault();
+    var quizID = event.data.id;
+    $("div#edit").hide();
+    $.post("/qget", {q: quizID}, sysquiz.adminQuizGotQuizInfo, "json");
+}
+
+sysquiz.adminQuizGotQuizInfo = function(r) {
+    var quiz = r['quiz'];
+    sysquiz.updatePage(quiz);
+    $("div#admin").show();
+    // Remove handler
+    $("#toggleEnabled").unbind('click').click({q:quiz}, sysquiz.toggleEnabled);
+}
+
+// XXX:  This is lazy;  two AJAX instead of one.  Fix later.
+sysquiz.toggleDone = function(r, quizID) {
+    $.post("/qget", {q: quizID}, sysquiz.adminQuizGotQuizInfo, "json");
+}
+
+sysquiz.toggleEnabled = function(event) {
+    var quiz = event.data.q;
+    if (quiz.Enabled) {
+	$.post("/qdisable", {q: quiz.ID}, 
+	       function(data) { sysquiz.toggleDone(data, quiz.ID) }, "json")
+    } else {
+	$.post("/qenable", {q: quiz.ID}, function(data) { sysquiz.toggleDone(data, quiz.ID) }, "json")
     }
 }
 
@@ -154,7 +185,7 @@ sysquiz.editQuiz = function(event) {
 sysquiz.appendNewQuestion = function(ql) {
     var qEntry = $('#widgets .questionInput');
     var el = qEntry.clone(false).appendTo(ql);
-    el.find(".removeQBtn").click({e: el}, function(event) {
+    el.find(".removeQBtn").unbind('click').click({e: el}, function(event) {
 	event.data.e.remove();
 	return false;
     });
@@ -183,8 +214,14 @@ sysquiz.changeAnswerType = function(el) {
     // and save it.
 }
 
+sysquiz.updatePage = function(quiz) {
+    $('#enabledStatus').text(quiz.Enabled ? "Enabled" : "Disabled");
+    $('#toggleEnabled').text("Click to " + (quiz.Enabled ? "Disable" : "Enable"));
+}
+
 sysquiz.editQuizGotQuizInfo = function(r) {
     var quiz = r['quiz'];
+    sysquiz.updatePage(quiz);
     $("#revertBtn").unbind('click').click({id: quiz.ID}, sysquiz.editQuiz);
     $('#editName').val(quiz.Title);
     $('#editID').val(quiz.ID);
