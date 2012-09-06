@@ -19,3 +19,8 @@ indexes:
   properties:
   - name: OwnerID
   - name: Created
+
+- kind: QuizRecord
+  properties:
+  - name: QuizID
+  - name: Name

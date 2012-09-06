@@ -1,0 +1,50 @@
+{{define "Contentblock"}}
+
+  <!-- stored display stuff that we'll use within other components -->
+  <div id="widgets" style="display:none;">
+
+    <li class="questionInput"><span class="questionText"></span></li>
+
+    <input id="duration" name="duration" value="" type="text-input" />
+    <select id="durationUnits">
+      <option value="y">years</option>
+      <option value="d">days</option>
+      <option value="h">hours</option>
+      <option value="m">minutes</option>
+      <option value="s" selected>s</option>
+      <option value="ms">ms</option>
+      <option value="us">&mu;s</option>
+      <option value="ns">ns</option>
+      <option value="ps">ps</option>
+    </select>
+  </div>
+
+  <div id="showQuiz">
+    <h2 id="quizName"></h2>
+
+    <h3>Questions</h3>
+  <form>
+   <fieldset>
+    <ol id="questionList">
+
+    </ol>
+    <br />
+    <input type="submit" name="saveAnswers" class="button" id="saveBtn" value="Save Work" />
+    <br />
+    <p>
+    <input type="submit" name="revert" class="button" id="revertBtn" value="Revert to Last Saved" />
+    <input type="submit" name="submitAnswers" class="button" id="submitBtn" value="Submit Answers (no undo!)" />
+    </p>
+
+   </fieldset>
+  </form>
+  </div>
+{{end}}
+
+{{define "Footerblock"}}
+  <div id="statusBox">
+    <p>Status: <span id="status"></span></p>
+  </div>
+
+
+{{end}}

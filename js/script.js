@@ -17,6 +17,7 @@ sysquiz.DELETE_QUIZ = "Deleting quiz";
 $(document).ready(function() {
     sysquiz.fetchQuizList();
     $("#createBtn").click(sysquiz.createQuiz);
+    $("#createRecordsBtn").click(sysquiz.createNewRecords);
     $("#saveBtn").click(sysquiz.saveQuiz);
     $("#newItem").click(sysquiz.newItem);
     $("#questionList").sortable();
@@ -131,12 +132,48 @@ sysquiz.adminQuiz = function(event) {
     $.post("/qget", {q: quizID}, sysquiz.adminQuizGotQuizInfo, "json");
 }
 
+sysquiz.removeQuizRecord = function(event) {
+    var qrid = event.data.qr;
+    alert("Asked to remove " + qrid);
+}
+
+sysquiz.adminQuizGotQuizRecords = function(r) {
+    var qlEntry = $('#widgets .quizRecordEntry');
+    var pageRl = $('#quizRecordList');
+    pageRl.empty();
+    var qrl = r["quizRecordList"];
+    for (var i = 0; i < qrl.length; i++) {
+	var el = qlEntry.clone(false).appendTo(pageRl);
+	// THESE MUST HAPPEN AS .text(), otherwise we introduce XSS
+	el.find(".recordID").text(qrl[i].ID);
+	el.find(".recordName").text(qrl[i].Name);
+	el.find(".removeQuizRecord").unbind('click').click({qr:qrl[i].ID}, sysquiz.removeQuizRecord);
+    }
+
+}
+    
+sysquiz.createNewRecords = function(event) {
+    event.preventDefault();
+    var newEntries = $('#newQuizRecordsInput').val().split(/\r\n|\r|\n/);
+    // Parse and submit as a []string
+    $.post("/qrcreate", {q: sysquiz.curQuizID, recs: JSON.stringify(newEntries)}, sysquiz.adminCreateRecordsDone, "json");
+}
+
+sysquiz.adminCreateRecordsDone = function(r) {
+    $('#newQuizRecordsInput').val('');
+    $.post("/qrget", {q: sysquiz.curQuizID}, sysquiz.adminQuizGotQuizRecords, "json");
+}
+
+sysquiz.curQuizID = "";
+
 sysquiz.adminQuizGotQuizInfo = function(r) {
     var quiz = r['quiz'];
     sysquiz.updatePage(quiz);
     $("div#admin").show();
     // Remove handler
     $("#toggleEnabled").unbind('click').click({q:quiz}, sysquiz.toggleEnabled);
+    $.post("/qrget", {q: quiz.ID}, sysquiz.adminQuizGotQuizRecords, "json");
+    sysquiz.curQuizID = quiz.ID;
 }
 
 // XXX:  This is lazy;  two AJAX instead of one.  Fix later.
@@ -226,6 +263,7 @@ sysquiz.editQuizGotQuizInfo = function(r) {
     $('#editName').val(quiz.Title);
     $('#editID').val(quiz.ID);
     $('#editVersion').val(quiz.Version);
+    $("div#admin").hide(); // xxx - this could get ugly;  modularize.
     $('#edit').show();
     var ql = $('#questionList');
     $("#quizDelete").unbind('click').click({q: quiz}, sysquiz.deleteQuiz);

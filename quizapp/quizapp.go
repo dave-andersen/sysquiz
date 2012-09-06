@@ -43,6 +43,24 @@ type Quiz struct {
 	Enabled     bool
 }
 
+type StudentQuiz struct {
+	Title string
+	Questions []Question
+	NumQuestions int // The questions can be partial
+}
+
+type Answer struct {
+	Response string
+	Submitted bool // Have they "submitted" this answer and can no longer modify?
+}
+
+type QuizRecord struct {
+	ID       string
+	Name     string
+	QuizID   string
+	Answers []Answer
+}
+
 type JSONError struct {
 	Name string `json:"name"`
 	Code int `json:"code"`
@@ -51,7 +69,7 @@ type JSONError struct {
 }
 
 var (
-	indexTemplate, createTemplate, pageTemplate, adminTemplate *template.Template
+	indexTemplate, createTemplate, pageTemplate, adminTemplate, takeTemplate *template.Template
 
 	// Error codes to use in the JSON response
 	ErrorAuth = JSONError{"AUTH", 401, "Authentication required", nil}
@@ -80,7 +98,9 @@ func init() {
 	adminTemplate = template.Must(template.ParseFiles("html/page.html", "html/admin.html"))
 	createTemplate = template.Must(template.ParseFiles("html/page.html", "html/create_inner.html"))
 	indexTemplate = template.Must(template.ParseFiles("html/page.html", "html/index_inner.html"))
+	takeTemplate = template.Must(template.ParseFiles("html/takepage.html", "html/take.html"))
 	http.HandleFunc("/", indexHandler);
+	// Functions for Instructors
 	http.HandleFunc("/create", createHandler);
 	http.Handle("/ql", AuthHandlerFunc(quizListHandler))
 	http.Handle("/qc", AuthHandlerFunc(quizCreateHandler))
@@ -89,7 +109,29 @@ func init() {
 	http.Handle("/qdel", AuthHandlerFunc(quizDeleteHandler))
 	http.Handle("/qenable", AuthHandlerFunc(quizEnableHandler))
 	http.Handle("/qdisable", AuthHandlerFunc(quizDisableHandler))
+	http.Handle("/qrget", AuthHandlerFunc(quizGetQuizRecords))
+	http.Handle("/qrcreate", AuthHandlerFunc(quizCreateQuizRecords))
+	// Functions for Students
+	http.HandleFunc("/take", takeHandler);
+	http.Handle("/take/qget", NoAuthHandlerFunc(quizStudentGetHandler))
 }
+
+type NoAuthHandlerFunc func(http.ResponseWriter, *http.Request, appengine.Context, map[string]interface{})
+
+func (f NoAuthHandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	jsonHandler(w, r, f)
+}
+
+func jsonHandler(w http.ResponseWriter, r *http.Request, handler func(http.ResponseWriter, *http.Request, appengine.Context, map[string]interface{})) {
+	resp := make(map[string]interface{})
+	c := appengine.NewContext(r)
+	handler(w, r, c, resp)
+	w.Header().Set("Content-Type", "text/javascript")
+	b, _ := json.Marshal(resp)
+	w.Write(b)
+	return
+}
+
 
 type AuthHandlerFunc func(http.ResponseWriter, *http.Request, appengine.Context, *user.User, map[string]interface{})
 
@@ -252,16 +294,10 @@ func quizCreateHandler(w http.ResponseWriter, r *http.Request, c appengine.Conte
 }
 
 func quizGetHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, u *user.User, resp map[string]interface{}) {
-	var q Quiz
 	quizID := r.FormValue("q")
-	k := datastore.NewKey(c, "Quiz", quizID, 0, nil)
-	// sanity check quizID, please
-	if err := datastore.Get(c, k, &q); err != nil {
-		resp[ErrorField] = ErrorDatastore
-		return
-	}
-	if q.OwnerID != u.ID {
-		resp[ErrorField] = ErrorAuth
+	q, err := getQuizIfOwnerMatch(quizID, c, u)
+	if err != nil {
+		resp[ErrorField] = err
 		return
 	}
 	json.Unmarshal([]byte(q.QuestionsM), &q.Questions)
@@ -288,9 +324,14 @@ func quizListHandler(w http.ResponseWriter, r *http.Request, c appengine.Context
 	resp["quizlist"] = qlist
 }
 
+func takeHandler(w http.ResponseWriter, r *http.Request) {
+	p := &Page{Title: "Take Quiz"}
+	takeTemplate.Execute(w, p)
+}
+
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	p := &Page{Title: "Quizzer"}
-	indexTemplate.Execute(w, p);
+	indexTemplate.Execute(w, p)
 }
 
 func createHandler(w http.ResponseWriter, r *http.Request) {
@@ -307,4 +348,113 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 		Logout: fmt.Sprintf("%s (<a href='%s'>logout</a>)", u, logouturl)}
 		createTemplate.Execute(w, p)
 	}
+}
+
+func getQuizIfOwnerMatch(quizID string, c appengine.Context, u *user.User) (q Quiz, err *JSONError) {
+	k := datastore.NewKey(c, "Quiz", quizID, 0, nil)
+	if err := datastore.Get(c, k, &q); err != nil {
+		return q, &ErrorDatastore
+	}
+	if q.OwnerID != u.ID {
+		return q, &ErrorAuth
+	}
+	
+	return q, nil
+}
+
+// Administering quiz functions
+func quizGetQuizRecords(w http.ResponseWriter, r *http.Request, c appengine.Context, u *user.User, resp map[string]interface{}) {
+	quizID := r.FormValue("q")
+	q, err := getQuizIfOwnerMatch(quizID, c, u)
+	if err != nil {
+		resp[ErrorField] = err
+		return
+	}
+
+	qidlist := make([]QuizRecord, 0)
+	qu := datastore.NewQuery("QuizRecord").Filter("QuizID =", q.ID).Order("Name")
+	for t := qu.Run(c); ; {
+		var qr QuizRecord
+		_, err := t.Next(&qr)
+		if err == datastore.Done {
+			break
+		}
+		if err != nil {
+			c.Infof("datastore query failed: %v", err)
+			resp[ErrorField] = ErrorDatastore
+			break
+		}
+		qidlist = append(qidlist, qr)
+	}
+
+	resp["quizRecordList"] = qidlist
+}
+
+func quizCreateQuizRecords(w http.ResponseWriter, r *http.Request, c appengine.Context, u *user.User, resp map[string]interface{}) {
+	quizID := r.FormValue("q")
+	var qrecs []string
+	if err := json.Unmarshal([]byte(r.FormValue("recs")), &qrecs); err != nil {
+		c.Infof("Unmarshal json failed on %v", r.FormValue("recs"))
+		resp[ErrorField] = ErrorOther
+		return
+	}
+
+	q, err := getQuizIfOwnerMatch(quizID, c, u)
+	if err != nil {
+		resp[ErrorField] = err
+		return
+	}
+
+	for _, rec := range qrecs {
+		qr := &QuizRecord{genQuizID(), rec, q.ID, nil}
+		k := datastore.NewKey(c, "QuizRecord", qr.ID, 0, nil)
+		if _, err := datastore.Put(c, k, qr); err != nil {
+			resp[ErrorField] = ErrorDatastore
+			return
+		}
+	}
+}
+
+// Student test-taking functions
+func quizStudentGetHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, resp map[string]interface{}) {
+	// Grab the individual quiz taking ID from their URL
+	// Search for it in the database
+	// Retrieve the quiz associated with it
+	// Strip out answers they can't see
+	// Return
+	var qr QuizRecord
+	quizRecordID := r.FormValue("qr")
+	k := datastore.NewKey(c, "QuizRecord", quizRecordID, 0, nil)
+	if err := datastore.Get(c, k, &qr); err != nil {
+		resp[ErrorField] = ErrorDatastore
+		return
+	}
+
+	var q Quiz
+	quizID := qr.QuizID
+	quizKey := datastore.NewKey(c, "Quiz", quizID, 0, nil)
+	if err := datastore.Get(c, quizKey, &q); err != nil {
+		resp[ErrorField] = ErrorDatastore
+		return
+	}
+	
+	json.Unmarshal([]byte(q.QuestionsM), &q.Questions)
+
+	// Some questions may be hidden until the answers have been submitted.
+
+	qlist := make([]Question, 0)
+	numAnswers := len(qr.Answers)
+	isSubmitted := true
+	for i := 0; i < len(q.Questions); i++ {
+		if (i >= numAnswers || !qr.Answers[i].Submitted) {
+			isSubmitted = false
+		}
+		qlist = append(qlist, q.Questions[i])
+		if q.Questions[i].IsStop && !isSubmitted {
+			break
+		}
+	}
+
+	sq := &StudentQuiz{q.Title, qlist, len(q.Questions)}
+	resp["quiz"] = sq
 }
