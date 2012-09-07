@@ -3,7 +3,18 @@
   <!-- stored display stuff that we'll use within other components -->
   <div id="widgets" style="display:none;">
 
-    <li class="questionInput"><span class="questionText"></span></li>
+    <li class="questionInput">
+    <label for="questionText"></label><span name="questionText"></span><br />
+    <input type="checkbox" name="finalizeCheckbox">Finalize Answer</input><br />
+    <label for="answerText">Answer:</label>
+    <textarea name="answerText" class="ui-widget-content" rows="5" cols="80"></textarea>
+    </li>
+
+    <li class="questionDisplay">
+      <span name="questionText"></span><br />
+      <span name="answerText" class="finalAnswer"></span>
+    </li>
+
 
     <input id="duration" name="duration" value="" type="text-input" />
     <select id="durationUnits">
@@ -25,15 +36,15 @@
     <h3>Questions</h3>
   <form>
    <fieldset>
-    <ol id="questionList">
+    <ol id="takeQuestionList">
 
     </ol>
     <br />
-    <input type="submit" name="saveAnswers" class="button" id="saveBtn" value="Save Work" />
+    <p id="moreQuestions">There are more questions that cannot be shown until you have finalized your answers to the current questions.</p>
+    <p><input type="submit" name="saveAnswers" class="button" id="saveBtn" value="Save Work" /> (Note:  Finalized answers cannot be modified once you click save).</p>
     <br />
     <p>
     <input type="submit" name="revert" class="button" id="revertBtn" value="Revert to Last Saved" />
-    <input type="submit" name="submitAnswers" class="button" id="submitBtn" value="Submit Answers (no undo!)" />
     </p>
 
    </fieldset>

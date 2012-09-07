@@ -43,12 +43,6 @@ type Quiz struct {
 	Enabled     bool
 }
 
-type StudentQuiz struct {
-	Title string
-	Questions []Question
-	NumQuestions int // The questions can be partial
-}
-
 type Answer struct {
 	Response string
 	Submitted bool // Have they "submitted" this answer and can no longer modify?
@@ -58,8 +52,25 @@ type QuizRecord struct {
 	ID       string
 	Name     string
 	QuizID   string
-	Answers []Answer
+	AnswersM string `json:"-"` // marshaled into JSON for storage in the datastore
+	Answers []Answer `datastore:"-"` // sent via the network
+	Version  int // Multiple-writer consistency, as in the quiz
 }
+
+// Pared down verisons that do not export data we want hidden.
+type StudentQuiz struct {
+	Title string
+	Questions []Question
+	NumQuestions int // The questions can be partial
+}
+
+type StudentQuizRecord struct {
+	ID string
+	Name string
+	Answers []Answer
+	Version int
+}
+
 
 type JSONError struct {
 	Name string `json:"name"`
@@ -77,6 +88,7 @@ var (
 	ErrorFormat = JSONError{"FORMAT", 400, "Bad request", nil}
 	ErrorVersion = JSONError{"VERSION", 409, "Conflicting update - someone else updated this since you loaded it.", nil}
 	ErrorOther = JSONError{"OTHER", 500, "Other error", nil}
+	ErrorQuizDisabled = JSONError{"DISABLED", 402, "Quiz is disabled", nil}
 
 	valid_atype = map[string]bool { "text" : true, "mc": true, "int": true, "float": true, "duration": true }
 )
@@ -114,6 +126,7 @@ func init() {
 	// Functions for Students
 	http.HandleFunc("/take", takeHandler);
 	http.Handle("/take/qget", NoAuthHandlerFunc(quizStudentGetHandler))
+	http.Handle("/take/save", NoAuthHandlerFunc(quizStudentSaveHandler))
 }
 
 type NoAuthHandlerFunc func(http.ResponseWriter, *http.Request, appengine.Context, map[string]interface{})
@@ -406,7 +419,7 @@ func quizCreateQuizRecords(w http.ResponseWriter, r *http.Request, c appengine.C
 	}
 
 	for _, rec := range qrecs {
-		qr := &QuizRecord{genQuizID(), rec, q.ID, nil}
+		qr := &QuizRecord{genQuizID(), rec, q.ID, "", nil, 0}
 		k := datastore.NewKey(c, "QuizRecord", qr.ID, 0, nil)
 		if _, err := datastore.Put(c, k, qr); err != nil {
 			resp[ErrorField] = ErrorDatastore
@@ -416,32 +429,43 @@ func quizCreateQuizRecords(w http.ResponseWriter, r *http.Request, c appengine.C
 }
 
 // Student test-taking functions
-func quizStudentGetHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, resp map[string]interface{}) {
-	// Grab the individual quiz taking ID from their URL
-	// Search for it in the database
-	// Retrieve the quiz associated with it
-	// Strip out answers they can't see
-	// Return
-	var qr QuizRecord
-	quizRecordID := r.FormValue("qr")
+
+func getQuizAndRecord(c appengine.Context, quizRecordID string) (q Quiz, qr QuizRecord, errorReturn *JSONError) {
+	errorReturn = nil
 	k := datastore.NewKey(c, "QuizRecord", quizRecordID, 0, nil)
 	if err := datastore.Get(c, k, &qr); err != nil {
-		resp[ErrorField] = ErrorDatastore
+		errorReturn = &ErrorDatastore
 		return
 	}
 
-	var q Quiz
 	quizID := qr.QuizID
 	quizKey := datastore.NewKey(c, "Quiz", quizID, 0, nil)
 	if err := datastore.Get(c, quizKey, &q); err != nil {
-		resp[ErrorField] = ErrorDatastore
+		errorReturn = &ErrorDatastore
+		return
+	}
+
+	if (!q.Enabled) {
+		errorReturn = &ErrorQuizDisabled
 		return
 	}
 	
+	json.Unmarshal([]byte(qr.AnswersM), &qr.Answers)
 	json.Unmarshal([]byte(q.QuestionsM), &q.Questions)
+	return
+}
+
+func quizStudentGetHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, resp map[string]interface{}) {
+	q, qr, err := getQuizAndRecord(c, r.FormValue("qr"))
+	if err != nil {
+		resp[ErrorField] = *err
+		return
+	}
+
+	// Exported version
+	sqr := &StudentQuizRecord{qr.ID, qr.Name, qr.Answers, qr.Version}
 
 	// Some questions may be hidden until the answers have been submitted.
-
 	qlist := make([]Question, 0)
 	numAnswers := len(qr.Answers)
 	isSubmitted := true
@@ -456,5 +480,64 @@ func quizStudentGetHandler(w http.ResponseWriter, r *http.Request, c appengine.C
 	}
 
 	sq := &StudentQuiz{q.Title, qlist, len(q.Questions)}
+	resp["quizRecord"] = sqr
 	resp["quiz"] = sq
+}
+
+func quizStudentSaveHandler(w http.ResponseWriter, r *http.Request, c appengine.Context, resp map[string]interface{}) {
+	var qr, nqr QuizRecord
+	if err := json.Unmarshal([]byte(r.FormValue("qr")), &nqr); err != nil {
+		c.Infof("Unmarshal json failed on %v", r.FormValue("qr"))
+		resp[ErrorField] = ErrorOther
+		return
+	}
+
+	// We're just calling this to check if the quiz is enabled and valid.
+	_, _, quizErr := getQuizAndRecord(c, r.FormValue("qr"))
+	if quizErr != nil {
+		resp[ErrorField] = *quizErr
+		return
+	}
+
+	k := datastore.NewKey(c, "QuizRecord", nqr.ID, 0, nil)
+
+	err := datastore.RunInTransaction(c, func(c appengine.Context) error {
+		if err := datastore.Get(c, k, &qr); err != nil {
+			resp[ErrorField] = ErrorDatastore
+			return errors.New("Datastore Error")
+		}
+		json.Unmarshal([]byte(qr.AnswersM), &qr.Answers)
+
+		// Version check
+		if (qr.Version != nqr.Version) {
+			resp[ErrorField] = ErrorVersion
+			return errors.New("Version mismatch");
+		}
+		// They're not allowed to overwrite previously-submitted answers
+		numAnswers := len(qr.Answers)
+		for i, an := range nqr.Answers {
+			if (i >= numAnswers) {
+				qr.Answers = append(qr.Answers, an)
+			} else {
+				if (qr.Answers[i].Submitted) {
+					continue
+				} else {
+					qr.Answers[i].Response = an.Response
+					qr.Answers[i].Submitted = an.Submitted
+				}
+			}
+		}
+		am, _ := json.Marshal(qr.Answers)
+		qr.AnswersM = string(am)
+		if _, err1 := datastore.Put(c, k, &qr); err1 != nil {
+			resp[ErrorField] = ErrorDatastore
+			c.Infof("Could not put quiz record: %v", err1)
+			return errors.New("save failed")
+		}
+		
+		return nil
+	}, nil);
+	if err != nil {
+		c.Infof("Transactional record save failed: ", err)
+	}		
 }

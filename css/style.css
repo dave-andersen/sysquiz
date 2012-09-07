@@ -230,6 +230,17 @@ ol#questionList li {
     margin-bottom: 5px;
 }
 
+span.finalAnswer {
+    border: 1px solid gray;
+    margin: 2px;
+    padding: 2px;
+}
+
+li.questionDisplay {
+    margin-top: 2em;
+    margin-bottom: 2em;
+}
+
 .quizListEntry .quizID { font-size: 50%; color: #666; }
 #quizDelete { color: #e00; }
 

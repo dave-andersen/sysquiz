@@ -1,6 +1,5 @@
-- Taking quiz interface first go
-  - create / email links for quiz-takers
-  - separate overall UI into making / taking / grading
+- Bug:  Don't allocate records for blank lines in the 'admin' link
+- Feature:  Add a 'delete quiz record' link to admin
 
 - Improve aesthetics of making quiz page
 
