@@ -43,7 +43,7 @@
       <div name="showWorkDiv" style="display:none;"><label for="showWorkInput">Work: </label>
       <textarea name="showWorkInput" class="ui-widget-content" rows=3 cols="40"></textarea>
       </div><br />
-      <input type="checkbox" name="isStop">Force submit after this question</input>
+      <span name="isStopSpan" title="If checked, the student must submit their final answer to this question before they can see the later questions"><input type="checkbox" name="isStop">Force submit after this question</input></span>
       </li>
 
   </div>
@@ -106,6 +106,7 @@
    </fieldset>
   </form>
   </div>
+
 {{end}}
 
 {{define "Footerblock"}}

@@ -232,6 +232,7 @@ sysquiz.appendNewQuestion = function(ql) {
     el.find('[name="showWork"]').change({e: el}, function(event) {
 	sysquiz.updateAnswerDisplay(event.data.e);
     });
+    el.find('[name="isStopSpan"]').qtip();
     el.find('[name="isStop"]').change({e: el}, function(event) {
 	sysquiz.updateAnswerDisplay(event.data.e);
     });
