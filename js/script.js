@@ -33,7 +33,8 @@ sysquiz.parseQuestion = function(el) {
 	      AnswerType: el.find('[name="answerType"]').val(),
 	      Work: el.find('[name="showWorkInput"]').val(),
 	      ShowWork: el.find('[name="showWork"]').is(':checked'),
-	      IsStop: el.find('[name="isStop"]').is(':checked')
+	      IsStop: el.find('[name="isStop"]').is(':checked'),
+	      Answer: el.find('[name="textAnswer"]').val()
 	    };
     return q;
 }
@@ -232,7 +233,9 @@ sysquiz.appendNewQuestion = function(ql) {
     el.find('[name="showWork"]').change({e: el}, function(event) {
 	sysquiz.updateAnswerDisplay(event.data.e);
     });
+    el.find('[name="showWorkSpan"]').qtip();
     el.find('[name="isStopSpan"]').qtip();
+    el.find('[name="answerType"]').qtip();
     el.find('[name="isStop"]').change({e: el}, function(event) {
 	sysquiz.updateAnswerDisplay(event.data.e);
     });
@@ -264,6 +267,7 @@ sysquiz.editQuizGotQuizInfo = function(r) {
     $('#editName').val(quiz.Title);
     $('#editID').val(quiz.ID);
     $('#editVersion').val(quiz.Version);
+    $('#editQuizName').text(quiz.Title);
     $("div#admin").hide(); // xxx - this could get ugly;  modularize.
     $('#edit').show();
     var ql = $('#questionList');
@@ -278,6 +282,7 @@ sysquiz.editQuizGotQuizInfo = function(r) {
 	    el.find('[name="isStop"]').prop("checked", q.IsStop);
 	    el.find('[name="showWork"]').prop("checked", q.ShowWork);
 	    el.find('[name="showWorkInput"]').val(q.Work);
+	    el.find('[name="textAnswer"]').val(q.Answer);
 	    sysquiz.updateAnswerDisplay(el)
 	    // throw in an answer div so we can delete the whole thing
 	    // if they change the type...
