@@ -63,12 +63,12 @@
   </div>
 
   <div id="admin" style="display:none;">
-  <h2>Administer Quiz</h2>
+  <h2>Administer Quiz <span id="adminQuizName"></span></h2>
   <ul>
-    <li>quiz status: <span id="enabledStatus"></span>  (<a id="toggleEnabled"></a>)</li>
+    <li>quiz status: <span id="enabledStatus"></span>  (<a id="toggleEnabled" title="students can only take quizzes once they are enabled."></a>)</li>
   </ul>
 
-  <h3>Quiz Records</h3>
+  <h3>Quiz Records <span style="font-size:70%; color:red;" id="quizRecordHelp" title="Quiz records are individual copies of the quiz as presented to and taken by a student.  Allocate one record for each student in the class by entering their name/id/whatever in the box below.  The record ID will allow them to take the quiz, save their results, etc.">(?)</span></h3>
   <ul id="quizRecordList"></ul>
 
   <h3>Allocate Quiz Records</h3>
@@ -84,7 +84,7 @@
   </div>
 
   <div id="edit" style="display:none;">
-  <h2>Edit Quiz <span id="editQuizName"></span> [<a id="quizDelete" href="#">delete this quiz</a>]</h2>
+  <h2>Edit Quiz <span id="editQuizName"></span> <span style="font-size: 70%">[<a id="quizDelete" href="#">delete this quiz</a>]</span></h2>
   <form>
    <fieldset>
      <input style="display:none;" type="hidden" id="editID" value="" />
@@ -92,13 +92,12 @@
      <label for="name" id="editNameLabel">Quiz name</label>
      <input type="text" name="editName" id="editName" value="" class="text-input" />
     <label class="error" for="name" id="nameError" style="display:none;">(Don't leave blank)</label>
-    <h3>Questions</h3>
-    <p>(drag to re-order)</p>
+    <h3>Questions <span style="font-size: 70%;">(drag to re-order)</span></h3>
     <ol id="questionList">
 
     </ol>
     <br />
-    <input type="submit" name="newItem" class="button" id="newItem" value="Add New Item" />
+    <input type="submit" name="newItem" class="button" id="newItem" value="Add Another Question" />
     <br />
     <p>
     <input type="submit" name="save" class="button" id="saveBtn" value="Save Changes" />

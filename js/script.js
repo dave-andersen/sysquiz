@@ -21,6 +21,7 @@ $(document).ready(function() {
     $("#saveBtn").click(sysquiz.saveQuiz);
     $("#newItem").click(sysquiz.newItem);
     $("#questionList").sortable();
+    $("#quizRecordHelp").qtip();
 });
 
 sysquiz.newItem = function(event) {
@@ -171,6 +172,7 @@ sysquiz.adminQuizGotQuizInfo = function(r) {
     var quiz = r['quiz'];
     sysquiz.updatePage(quiz);
     $("div#admin").show();
+    //$("adminQuizName").val(quiz.Title);
     // Remove handler
     $("#toggleEnabled").unbind('click').click({q:quiz}, sysquiz.toggleEnabled);
     $.post("/qrget", {q: quiz.ID}, sysquiz.adminQuizGotQuizRecords, "json");
